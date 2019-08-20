@@ -15,6 +15,13 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+	void on_actionNewChip_triggered();
+
+	void on_dlgNewChip_accepted(qint32 rows, qint32 columns);
+
+	void on_actionExit_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

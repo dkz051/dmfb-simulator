@@ -25,14 +25,20 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
+        dlgnewchip.cpp \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        wndconfigchip.cpp
 
 HEADERS += \
-        mainwindow.h
+        dlgnewchip.h \
+        mainwindow.h \
+        wndconfigchip.h
 
 FORMS += \
-        mainwindow.ui
+        dlgnewchip.ui \
+        mainwindow.ui \
+        wndconfigchip.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
