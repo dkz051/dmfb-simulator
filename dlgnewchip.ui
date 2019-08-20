@@ -24,6 +24,9 @@
   <property name="windowTitle">
    <string>New Chip</string>
   </property>
+  <property name="locale">
+   <locale language="English" country="UnitedStates"/>
+  </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="1">
     <widget class="QSpinBox" name="boxRows">

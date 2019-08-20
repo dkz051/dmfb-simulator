@@ -1,7 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "dlgnewchip.h"
-#include
+#include "frmconfigchip.h"
+#include "dlgabout.h"
 
 #include <QMessageBox>
 
@@ -19,21 +20,31 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_actionNewChip_triggered()
 {
-	dlgNewChip wndNewChip;
+	dlgNewChip wndNewChip(this);
 	connect(&wndNewChip, SIGNAL(accepted(qint32, qint32)), this, SLOT(on_dlgNewChip_accepted(qint32, qint32)));
-	connect(&wndNewChip, SIGNAL(rejected()), this, SLOT(on_dlgNewChip_rejected()));
 	wndNewChip.exec();
 }
 
 void MainWindow::on_dlgNewChip_accepted(qint32 rows, qint32 columns)
 {
-	QString prompt = QString("Dialog returned with %1 row(s) and %2 column(s).").arg(rows).arg(columns);
-	QMessageBox::information(this, tr("Confirmed"), prompt);
+	frmConfigChip *wndConfigChip = new frmConfigChip(this);
+	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(on_dlgConfigChip_accepted(const chipConfig &)));
+	wndConfigChip->setDimensions(rows, columns);
+	wndConfigChip->show();
+}
 
-
+void MainWindow::on_dlgConfigChip_accepted(const chipConfig &config)
+{
+	QMessageBox::information(this, tr("Confirmed"), "Chip configuration finished");
 }
 
 void MainWindow::on_actionExit_triggered()
 {
 	this->close();
+}
+
+void MainWindow::on_actionAboutDmfbSimulator_triggered()
+{
+	dlgAbout wndAbout(this);
+	wndAbout.exec();
 }
