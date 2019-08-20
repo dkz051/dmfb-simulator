@@ -8,6 +8,8 @@ dlgNewChip::dlgNewChip(QWidget *parent) :
     ui(new Ui::dlgNewChip)
 {
 	ui->setupUi(this);
+	this->setWindowFlags(Qt::Dialog | Qt::CustomizeWindowHint | Qt::WindowTitleHint | Qt::WindowCloseButtonHint);
+	this->window()->layout()->setSizeConstraint(QLayout::SetFixedSize);
 }
 
 dlgNewChip::~dlgNewChip()
