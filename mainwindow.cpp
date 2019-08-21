@@ -3,6 +3,7 @@
 #include "dlgnewchip.h"
 #include "frmconfigchip.h"
 #include "dlgabout.h"
+#include "commandset.h"
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -11,6 +12,9 @@
 #include <QMimeData>
 #include <QDragEnterEvent>
 #include <QDropEvent>
+#include <QTextStream>
+
+#include <string>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -88,11 +92,83 @@ void MainWindow::dropEvent(QDropEvent *e)
 {
 	QList<QUrl> urls = e->mimeData()->urls();
 	if (urls.empty()) return;
-	loadFile(urls[0]);
+	loadFile(urls.first().toLocalFile());
 }
 
-void MainWindow::loadFile(const QUrl &url)
+void MainWindow::loadFile(const QString &url)
 {
+	QFile file(url);
+
+	if (!file.open(QFile::ReadOnly | QFile::Text)) {
+		QMessageBox::warning(this, tr("Error"), tr("Cannot open the command file specified."));
+		return;
+	}
+
+//	QByteArray data = file.readAll();
+//	ui->txtContent->setText(QString::fromLocal8Bit(data));
+	QTextStream stream(&file);
+
+	cmdCount = 0;
+
+	while (!stream.atEnd()) {
+		std::string line = stream.readLine().toStdString();
+
+		++cmdCount;
+
+		char buf[16];
+
+		qint32 t, x1, y1, x2, y2;
+		sscanf(line.c_str(), "%s", buf);
+
+		switch (buf[1]) {
+			case 'n': { // input
+				sscanf(line.c_str(), "%s%d,%d,%d;", buf, &t, &x1, &y1);
+				commands[t].push_back(command(commandType::Input, t, x1, y1, 0, 0));
+				break;
+			}
+			case 'u': { // output
+				sscanf(line.c_str(), "%s%d,%d,%d;", buf, &t, &x1, &y1);
+				commands[t].push_back(command(commandType::Output, t, x1, y1, 0, 0));
+				break;
+			}
+			case 'o': { // move
+				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
+				commands[t].push_back(command(commandType::Move, t, x1, y1, x2, y2));
+				break;
+			}
+			case 'e': { // merge
+				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
+				commands[t].push_back(command(commandType::Merge, t, x1, y1, x2, y2));
+				break;
+			}
+			case 'p': { // split
+				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
+				commands[t].push_back(command(commandType::Split, t, x1, y1, x2, y2));
+				break;
+			}
+			case 'i': { // mix
+				// TODO
+				break;
+			}
+			default: { // invalid command
+				QMessageBox::warning(this, tr("Invalid command file"), tr(QString("Unrecognized command on line %1.").arg(cmdCount).toStdString().c_str()));
+				return;
+			}
+		}
+	}
+
+	if (cmdCount == 0) { // no command read
+		QMessageBox::warning(this, tr("Invalid command file"), tr("Empty file, nothing loaded."));
+	}
+
+	this->resetId();
+	this->totalTime = commands.lastKey();
+
 	ui->actionStart->setEnabled(true);
 	ui->actionStep->setEnabled(true);
+}
+
+void MainWindow::resetId()
+{
+	idTotal = 0;
 }

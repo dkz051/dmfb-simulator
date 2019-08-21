@@ -51,9 +51,9 @@ void displayWidget::paintEvent(QPaintEvent *)
 
 	qreal W = this->width(), H = this->height();
 
-	renderPortType(config, W, H, &painter);
 	renderGrid(config, W, H, &painter);
-	renderPortConfigGrid(config, W, H, &painter);
+	renderPortType(config, W, H, &painter);
+	//renderPortConfigGrid(config, W, H, &painter);
 }
 
 void displayWidget::mousePressEvent(QMouseEvent *e)

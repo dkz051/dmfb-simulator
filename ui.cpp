@@ -4,13 +4,12 @@
 #include <QPalette>
 #include <QDebug>
 
-static const qreal marginSize = 4.0;
 static const qreal minGridSize = 4.0;
 
 qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns)
 {
-	width -= marginSize;
-	height -= marginSize;
+	width *= 0.8;
+	height *= 0.8;
 	// Determine the size of a single grid.
 	// Port identifier (Input/Output/Wash/Waste) shall take the place of 2 grids.
 	// Grid size is truncated to 4 logical pixels, or at least 4 pixels.
@@ -105,7 +104,6 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	}
 
 	g->setBrush(color);
-//	g->fillRect(QRectF(X * grid, Y * grid, W * grid, H * grid), brush);
 	g->drawRect(QRectF(X * grid, Y * grid, W * grid, H * grid));
 
 	QFont font("Segoe UI");
@@ -116,8 +114,6 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	g->setPen(pen);
 
 	g->drawText(QRectF(X * grid, Y * grid, W * grid, H * grid), Qt::AlignCenter, str);
-	//g->drawRect(QRectF(X * grid, Y * grid, W * grid, H * grid));
-	//g->drawText(QPointF(X * grid, Y * grid), str);
 }
 
 void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)

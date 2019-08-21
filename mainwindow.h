@@ -5,6 +5,7 @@
 #include <QUrl>
 
 #include "chipconfig.h"
+#include "commandset.h"
 
 namespace Ui {
 class MainWindow;
@@ -32,12 +33,20 @@ private slots:
 
 	void on_actionAboutDmfbSimulator_triggered();
 
-	void loadFile(const QUrl &url);
+	void loadFile(const QString &url);
 	void selectFile();
 	void on_actionLoadCommandFile_triggered();
 
 private:
     Ui::MainWindow *ui;
+	cmdTimeSet commands;
+
+	qint32 totalTime;
+	qint32 cmdCount;
+
+	qint32 idTotal;
+	qint32 newId();
+	void resetId();
 };
 
 #endif // MAINWINDOW_H

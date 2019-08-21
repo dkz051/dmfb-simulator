@@ -21,6 +21,9 @@
     <family>Segoe UI</family>
    </font>
   </property>
+  <property name="acceptDrops">
+   <bool>true</bool>
+  </property>
   <property name="windowTitle">
    <string>DMFB Simulator</string>
   </property>
@@ -43,6 +46,16 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
+      <widget class="QTextBrowser" name="txtContent">
+       <property name="geometry">
+        <rect>
+         <x>170</x>
+         <y>30</y>
+         <width>256</width>
+         <height>192</height>
+        </rect>
+       </property>
+      </widget>
      </widget>
     </item>
    </layout>
@@ -141,6 +154,9 @@
   <action name="actionExit">
    <property name="text">
     <string>&amp;Exit</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+W</string>
    </property>
   </action>
   <action name="actionAboutDmfbSimulator">
