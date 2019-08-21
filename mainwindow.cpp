@@ -5,6 +5,12 @@
 #include "dlgabout.h"
 
 #include <QMessageBox>
+#include <QFileDialog>
+#include <QDebug>
+#include <QFile>
+#include <QMimeData>
+#include <QDragEnterEvent>
+#include <QDropEvent>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -35,7 +41,9 @@ void MainWindow::on_dlgNewChip_accepted(qint32 rows, qint32 columns)
 
 void MainWindow::on_dlgConfigChip_accepted(const chipConfig &config)
 {
-	QMessageBox::information(this, tr("Confirmed"), "Chip configuration finished");
+	ui->actionLoadCommandFile->setEnabled(true);
+	ui->pWidget->config = config;
+	selectFile();
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -47,4 +55,44 @@ void MainWindow::on_actionAboutDmfbSimulator_triggered()
 {
 	dlgAbout wndAbout(this);
 	wndAbout.exec();
+}
+
+void MainWindow::on_actionLoadCommandFile_triggered()
+{
+	selectFile();
+}
+
+void MainWindow::selectFile()
+{
+	QFileDialog *fileDlg = new QFileDialog(this);
+	fileDlg->setWindowTitle(tr("Open Command File"));
+	fileDlg->setDirectory(".");
+	fileDlg->setNameFilter("All Files (*.*)");
+	fileDlg->setFileMode(QFileDialog::ExistingFile);
+	if (fileDlg->exec()) {
+		QStringList fileName = fileDlg->selectedFiles();
+		if (fileName.empty()) return;
+		loadFile(fileName[0]);
+	}
+	this->setFocus();
+}
+
+void MainWindow::dragEnterEvent(QDragEnterEvent *e)
+{
+	if (e->mimeData()->hasFormat("text/uri-list")) {
+		e->acceptProposedAction();
+	}
+}
+
+void MainWindow::dropEvent(QDropEvent *e)
+{
+	QList<QUrl> urls = e->mimeData()->urls();
+	if (urls.empty()) return;
+	loadFile(urls[0]);
+}
+
+void MainWindow::loadFile(const QUrl &url)
+{
+	ui->actionStart->setEnabled(true);
+	ui->actionStep->setEnabled(true);
 }

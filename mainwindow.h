@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QUrl>
+
 #include "chipconfig.h"
 
 namespace Ui {
@@ -16,6 +18,10 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+protected:
+	void dragEnterEvent(QDragEnterEvent *e);
+	void dropEvent(QDropEvent *e);
+
 private slots:
 	void on_actionNewChip_triggered();
 
@@ -25,6 +31,11 @@ private slots:
 	void on_actionExit_triggered();
 
 	void on_actionAboutDmfbSimulator_triggered();
+
+	void loadFile(const QUrl &url);
+	void selectFile();
+	void on_actionLoadCommandFile_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

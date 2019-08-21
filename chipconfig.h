@@ -2,18 +2,21 @@
 #define CHIPCONFIG_H
 
 #include <QIntegerForSize>
-#include <QList>
+#include <QVector>
+
+enum portType
+{
+	none, input, output, wash, waste
+};
 
 struct chipConfig
 {
 	qint32 rows;
 	qint32 columns;
-	qint32 waste;
-	qint32 output;
-	QList<qint32> input;
-	QList<qint32> wash;
+	QVector<portType> L, T, R, B;
+	bool valid;
 
-	void init(qint32 rows = 8, qint32 columns = 8);
+	void init(qint32 rows = -1, qint32 columns = -1);
 };
 
 #endif // CHIPCONFIG_H

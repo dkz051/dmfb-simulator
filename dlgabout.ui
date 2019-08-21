@@ -28,7 +28,7 @@
    <item row="0" column="0">
     <widget class="QLabel" name="lblData">
      <property name="text">
-      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Digital microfluidic biochip simulator&lt;/p&gt;&lt;p&gt;30240522 long assignment #1&lt;/p&gt;&lt;p&gt;Open source: &lt;a href=&quot;https://github.com/Chrogeek/dmfb-simulator&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://github.com/Chrogeek/dmfb-simulator&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:14pt;&quot;&gt;Digital microfluidic biochip simulator&lt;/span&gt;&lt;/p&gt;&lt;p&gt;30240522 long assignment #1, by gycy&lt;/p&gt;&lt;p&gt;Open source: &lt;a href=&quot;https://github.com/Chrogeek/dmfb-simulator&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;https://github.com/Chrogeek/dmfb-simulator&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>

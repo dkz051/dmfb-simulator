@@ -26,18 +26,24 @@ CONFIG += c++11
 
 SOURCES += \
         chipconfig.cpp \
+        commandset.cpp \
         dlgabout.cpp \
         dlgnewchip.cpp \
         frmconfigchip.cpp \
         main.cpp \
-        mainwindow.cpp
+        mainwindow.cpp \
+        paintwidget.cpp \
+        ui.cpp
 
 HEADERS += \
         chipconfig.h \
+        commandset.h \
         dlgabout.h \
         dlgnewchip.h \
         frmconfigchip.h \
-        mainwindow.h
+        mainwindow.h \
+        paintwidget.h \
+        ui.h
 
 FORMS += \
         dlgabout.ui \
