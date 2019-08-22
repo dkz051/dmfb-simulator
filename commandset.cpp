@@ -4,8 +4,7 @@
 #include <QTextStream>
 #include <QStringList>
 
-dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x, qreal &y)
-{
+dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x, qreal &y) {
 	if (fabs(a.t - b.t) < eps) {
 		x = b.x;
 		y = b.y;
@@ -26,8 +25,7 @@ dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x,
 	return ans;
 }
 
-bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime)
-{
+bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime) {
 	QFile file(url);
 	file.open(QFile::ReadOnly | QFile::Text);
 	QTextStream fs(&file);
@@ -336,8 +334,7 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 	return true;
 }
 
-void moveToPort(qint32 &x, qint32 &y, const chipConfig &config)
-{
+void moveToPort(qint32 &x, qint32 &y, const chipConfig &config) {
 	if (x == 0 && y + 1 < config.rows) {
 		--x;
 	} else if (y + 1 == config.rows && x + 1 < config.columns) {
@@ -349,8 +346,7 @@ void moveToPort(qint32 &x, qint32 &y, const chipConfig &config)
 	}
 }
 
-bool isPortType(qint32 x, qint32  y, const chipConfig &config, portType T)
-{
+bool isPortType(qint32 x, qint32  y, const chipConfig &config, portType T) {
 	if (x > 0 && x + 1 < config.columns && y > 0 && y + 1 < config.rows) {
 		return false;
 	}
@@ -366,8 +362,7 @@ bool isPortType(qint32 x, qint32  y, const chipConfig &config, portType T)
 	return false;
 }
 
-bool getRealTimeStatus(const droplet &d, qreal t, dropletStatus &ans, qreal &x, qreal &y)
-{
+bool getRealTimeStatus(const droplet &d, qreal t, dropletStatus &ans, qreal &x, qreal &y) {
 	dropletStatus mntTmp;
 	mntTmp.t = t;
 
@@ -379,8 +374,7 @@ bool getRealTimeStatus(const droplet &d, qreal t, dropletStatus &ans, qreal &x, 
 	return true;
 }
 
-qreal progress(qreal t)
-{
+qreal progress(qreal t) {
 	if (t < 0.5) {
 		return pow(t * 2.0, 3.0) / 2.0;
 	} else {
@@ -388,7 +382,6 @@ qreal progress(qreal t)
 	}
 }
 
-qint32 randint(qint32 L, qint32 R)
-{
+qint32 randint(qint32 L, qint32 R) {
 	return qint32(rand() / double(RAND_MAX) * (R - L)) + L;
 }

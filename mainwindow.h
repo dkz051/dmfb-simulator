@@ -9,14 +9,11 @@
 #include "chipconfig.h"
 #include "commandset.h"
 
-static const qreal acceleration = 3.0;
-
 namespace Ui {
-class MainWindow;
+	class MainWindow;
 }
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
@@ -26,6 +23,8 @@ public:
 protected:
 	void dragEnterEvent(QDragEnterEvent *e);
 	void dropEvent(QDropEvent *e);
+
+	bool eventFilter(QObject *o, QEvent *e);
 
 private slots:
 	void on_actionNewChip_triggered();
@@ -58,6 +57,11 @@ private:
 
 	QTimer timer;
 	qint64 lastTime, displayTime;
+
+	qint64 minTime, maxTime;
+	QVector<droplet> droplets;
+	bool dataLoaded;
+	chipConfig config;
 };
 
 #endif // MAINWINDOW_H

@@ -6,8 +6,7 @@
 
 static const qreal minGridSize = 4.0;
 
-qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns)
-{
+qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns) {
 	width *= 0.95;
 	height *= 0.95;
 	// Determine the size of a single grid.
@@ -16,8 +15,7 @@ qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns)
 	return std::max(std::min(width / (columns + 4), height / (rows + 4)), minGridSize);
 }
 
-void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
-{
+void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -39,8 +37,7 @@ void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->restore();
 }
 
-void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *g)
-{
+void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -57,8 +54,7 @@ void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
-{
+void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -87,8 +83,7 @@ void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPainter *g, bool withText)
-{
+void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPainter *g, bool withText) {
 	QColor color, forecolor;
 	QString str;
 
@@ -137,8 +132,7 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	}
 }
 
-void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
-{
+void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -163,8 +157,7 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->restore();
 }
 
-void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g)
-{
+void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -192,8 +185,7 @@ void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, 
 	g->restore();
 }
 
-void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g)
-{
+void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;

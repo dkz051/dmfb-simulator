@@ -214,7 +214,7 @@
             </spacer>
            </item>
            <item>
-            <widget class="previewWidget" name="pWidget" native="true">
+            <widget class="QWidget" name="pWidget" native="true">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -265,14 +265,6 @@
    </layout>
   </widget>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>previewWidget</class>
-   <extends>QWidget</extends>
-   <header>paintWidget.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections>
   <connection>

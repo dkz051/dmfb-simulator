@@ -4,13 +4,11 @@
 #include <QIntegerForSize>
 #include <QVector>
 
-enum portType
-{
+enum portType {
 	none, input, output, wash, waste
 };
 
-struct chipConfig
-{
+struct chipConfig {
 	qint32 rows;
 	qint32 columns;
 	QVector<portType> L, T, R, B;

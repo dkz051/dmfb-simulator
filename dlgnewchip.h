@@ -8,8 +8,7 @@ namespace Ui {
 	class dlgNewChip;
 }
 
-class dlgNewChip : public QDialog
-{
+class dlgNewChip : public QDialog {
 	Q_OBJECT
 
 public:

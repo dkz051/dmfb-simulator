@@ -32,7 +32,6 @@ SOURCES += \
         frmconfigchip.cpp \
         main.cpp \
         mainwindow.cpp \
-        paintwidget.cpp \
         ui.cpp
 
 HEADERS += \
@@ -42,7 +41,6 @@ HEADERS += \
         dlgnewchip.h \
         frmconfigchip.h \
         mainwindow.h \
-        paintwidget.h \
         ui.h
 
 FORMS += \

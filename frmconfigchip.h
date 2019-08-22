@@ -12,8 +12,7 @@ namespace Ui {
 	class frmConfigChip;
 }
 
-class frmConfigChip : public QMainWindow
-{
+class frmConfigChip : public QMainWindow {
 	Q_OBJECT
 
 public:
@@ -23,10 +22,8 @@ public:
 	void setDimensions(qint32 rows, qint32 columns);
 	void refresh(QPainter *graphics);
 
-public slots:
-	void timerRefresh();
-
 protected:
+	bool eventFilter(QObject *o, QEvent *e);
 
 signals:
 	void accepted(const chipConfig &config);
@@ -49,6 +46,8 @@ private:
 	qint32 rows, columns;
 
 	QTimer *timer;
+	chipConfig config;
+	portType currentType;
 };
 
 

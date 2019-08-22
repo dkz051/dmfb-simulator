@@ -7,8 +7,7 @@ namespace Ui {
 	class dlgAbout;
 }
 
-class dlgAbout : public QDialog
-{
+class dlgAbout : public QDialog {
 	Q_OBJECT
 
 public:

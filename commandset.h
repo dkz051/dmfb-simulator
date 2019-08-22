@@ -15,16 +15,14 @@
 static const double eps = 1e-8;
 static const double radius = 0.4;
 
-struct dropletStatus
-{
+struct dropletStatus {
 	qreal t; // time
 	qint32 x, y; // center position
 	qreal rx, ry; // x- and y- radii
 	qint32 a, r, g, b; // color components
 };
 
-struct droplet
-{
+struct droplet {
 	QVector<dropletStatus> route;
 };
 
