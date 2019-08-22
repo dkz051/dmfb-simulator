@@ -38,6 +38,22 @@ void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->restore();
 }
 
+void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *g)
+{
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setBrush(QColor(192, 192, 192, 255));
+	g->drawRect(QRectF(grid, grid, (R - 2) * grid, (C - 2) * grid));
+
+	g->restore();
+}
+
 void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
 {
 	if (!config.valid) return;
@@ -68,7 +84,7 @@ void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPainter *g)
+void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPainter *g, bool withText)
 {
 	QColor color, forecolor;
 	QString str;
@@ -106,14 +122,16 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	g->setBrush(color);
 	g->drawRect(QRectF(X * grid, Y * grid, W * grid, H * grid));
 
-	QFont font;
-	font.setPointSizeF(std::min(grid / 4.0, 20.0));
-	g->setFont(font);
+	if (withText) {
+		QFont font;
+		font.setPointSizeF(std::min(grid / 4.0, 20.0));
+		g->setFont(font);
 
-	QPen pen(forecolor);
-	g->setPen(pen);
+		QPen pen(forecolor);
+		g->setPen(pen);
 
-	g->drawText(QRectF(X * grid, Y * grid, W * grid, H * grid), Qt::AlignCenter, str);
+		g->drawText(QRectF(X * grid, Y * grid, W * grid, H * grid), Qt::AlignCenter, str);
+	}
 }
 
 void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
@@ -127,12 +145,16 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
 	for (qint32 i = 0; i < R; ++i) {
-		renderPort(grid, -2.0, i, 2.0, 1.0, config.L[i], g);
-		renderPort(grid, C, i, 2.0, 1.0, config.R[i], g);
+		renderPort(grid, -2.0, i, 2.0, 1.0, config.L[i], g, true);
+		renderPort(grid, 0, i, 1.0, 1.0, config.L[i], g, false);
+		renderPort(grid, C, i, 2.0, 1.0, config.R[i], g, true);
+		renderPort(grid, C - 1.0, i, 1.0, 1.0, config.R[i], g, false);
 	}
 	for (qint32 j = 0; j < C; ++j) {
-		renderPort(grid, j, -2.0, 1.0, 2.0, config.T[j], g);
-		renderPort(grid, j, R, 1.0, 2.0, config.B[j], g);
+		renderPort(grid, j, -2.0, 1.0, 2.0, config.T[j], g, true);
+		renderPort(grid, j, 0, 1.0, 1.0, config.T[j], g, false);
+		renderPort(grid, j, R, 1.0, 2.0, config.B[j], g, true);
+		renderPort(grid, j, R - 1.0, 1.0, 1.0, config.B[j], g, false);
 	}
 
 	g->restore();
@@ -186,9 +208,12 @@ void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qr
 	}
 	qint32 sec = qint32(time), dex = qint32((time - sec) * 100);
 
-	g->drawText(QRectF(0.0, 0.0, W - size * 1.5, H), Qt::AlignRight | Qt::AlignTop, (flag ? "-" : "") + QString("%1").arg(sec));
+	g->drawText(QRectF(0.0, 0.0, W - size * 2, H), Qt::AlignRight | Qt::AlignTop, (flag ? "-" : "") + QString("%1").arg(sec));
 
 	font.setPointSizeF(std::max(size, 4.0) * 0.6);
 	g->setFont(font);
-	g->drawText(QRectF(W - size * 1.5, 0.0, size * 1.5, H), Qt::AlignLeft | Qt::AlignTop, QString(".%1").arg(dex, 2, 10, QChar('0')));
+	g->drawText(QRectF(W - size * 2, 0.0, size * 2, H), Qt::AlignLeft | Qt::AlignTop, QString(".%1").arg(dex, 2, 10, QChar('0')));
+
+	g->setPen(QColor(192, 192, 192, 255));
+	g->drawText(QRectF(0.0, size * 0.5, W, H), Qt::AlignRight | Qt::AlignTop, QString("/%1").arg(maxTime, 1, 'f', 0, QChar('0')));
 }

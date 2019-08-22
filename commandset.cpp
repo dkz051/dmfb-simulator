@@ -87,9 +87,9 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 
 			mnt0.a = 0;
 			mnt.a = 0xff;
-			mnt0.r = mnt.r = rand() & 0xff;
-			mnt0.g = mnt.g = rand() & 0xff;
-			mnt0.b = mnt.b = rand() & 0xff;
+			mnt0.r = mnt.r = randint(0, 255);
+			mnt0.g = mnt.g = randint(0, 255);
+			mnt0.b = mnt.b = randint(0, 255);
 
 			droplet nDrop;
 
@@ -291,9 +291,9 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			posMap.remove(std::make_pair(s.x, s.y));
 
 			u.a = s.a;
-			u.r = rand() & 0xff;
-			u.g = rand() & 0xff;
-			u.b = rand() & 0xff;
+			u.r = randint(s.r <= 127 ? 0 : 2 * s.r - 255, s.r >= 128 ? 255: 2 * s.r);
+			u.g = randint(s.g <= 127 ? 0 : 2 * s.g - 255, s.g >= 128 ? 255: 2 * s.g);
+			u.b = randint(s.b <= 127 ? 0 : 2 * s.b - 255, s.b >= 128 ? 255: 2 * s.b);
 
 			u.t = s.t + 2.0;
 			u.x = tk[4].toInt() - 1;
@@ -314,7 +314,7 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 				s.rx = 3.0 * radius;
 			}
 
-			s.t += 1.6;
+			s.t += 0.8;
 			result[id].route.push_back(s);
 
 			qint32 nid1 = count++, nid2 = count++;
@@ -375,16 +375,6 @@ bool getRealTimeStatus(const droplet &d, qreal t, dropletStatus &ans, qreal &x, 
 	if (D >= d.route.size()) return false; // out of range; no longer exists
 	if (D <= 0) return false; // not present yet
 
-/*	if (fabs(d.route[D].t - d.route[D - 1].t) < eps) {
-		x = d.route[D].x;
-		y = d.route[D].y;
-		return true;
-	}
-
-	qreal pro = (t - d.route[D - 1].t) / (d.route[D].t - d.route[D - 1].t);
-
-	x = d.route[D - 1].x + (d.route[D].x - d.route[D - 1].x) * progress(pro);
-	y = d.route[D - 1].y + (d.route[D].y - d.route[D - 1].y) * progress(pro);*/
 	ans = interpolation(d.route[D - 1], d.route[D], t, x, y);
 	return true;
 }
@@ -396,4 +386,9 @@ qreal progress(qreal t)
 	} else {
 		return 1.0 - pow((1.0 - t) * 2.0, 3.0) / 2.0;
 	}
+}
+
+qint32 randint(qint32 L, qint32 R)
+{
+	return qint32(rand() / double(RAND_MAX) * (R - L)) + L;
 }

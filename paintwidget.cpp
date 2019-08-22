@@ -14,7 +14,7 @@ void previewWidget::paintEvent(QPaintEvent *)
 
 	renderPortType(config, W, H, &painter);
 	renderGrid(config, W, H, &painter);
-	renderPortConfigGrid(config, W, H, &painter);
+	renderPortConfigMask(config, W, H, &painter);
 }
 
 void previewWidget::mousePressEvent(QMouseEvent *e)
@@ -28,17 +28,27 @@ void previewWidget::mousePressEvent(QMouseEvent *e)
 	qint32 Y = int(floor((e->y() - (H - grid * R) / 2.0) / grid));
 
 	if (Y >= 0 && Y < R) {
-		if ((X == -1 || X == -2) && Y + 1 < R) { // left
+		if (X >= -2 && X <= 0 && Y + 1 < R) { // left
 			config.L[Y] = currentType;
-		} else if ((X == C || X == C + 1) && Y > 0) { // right
+		} else if (X >= C - 1 && X <= C + 1 && Y > 0) { // right
 			config.R[Y] = currentType;
 		}
-	} else if (X >= 0 && X < C) {
-		if ((Y == -1 || Y == -2) && X > 0) { // top
+	}
+	if (X >= 0 && X < C) {
+		if (Y >= -2 && Y <= 0 && X > 0) { // top
 			config.T[X] = currentType;
-		} else if ((Y == R || Y == R + 1) && X + 1 < C) { // bottom
+		} else if (Y >= R - 1 && Y <= R + 1 && X + 1 < C) { // bottom
 			config.B[X] = currentType;
 		}
+	}
+	if (Y >= -2 && Y <= 0 && X == 0) { // top-left
+		config.L[0] = currentType;
+	} else if (X >= C - 1 && X <= C + 1 && Y == 0) { // top-right
+		config.T[C - 1] = currentType;
+	} else if (Y >= R - 1 && Y <= R + 1 && X == C - 1) { // bottom-right
+		config.R[R - 1] = currentType;
+	} else if (X >= -2 && X <= 0 && Y == R - 1) { // bottom-left
+		config.B[0] = currentType;
 	}
 
 	this->update();

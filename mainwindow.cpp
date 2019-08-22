@@ -192,5 +192,7 @@ void MainWindow::on_actionRevert_triggered()
 void MainWindow::on_actionReset_triggered()
 {
 	displayTime = ui->pWidget->minTime;
+	ui->actionNewChip->setEnabled(true);
+	ui->actionLoadCommandFile->setEnabled(true);
 	render();
 }

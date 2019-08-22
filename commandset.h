@@ -40,4 +40,7 @@ bool getRealTimeStatus(const droplet &d, qreal time, dropletStatus &ans, qreal &
 
 qreal progress(qreal t);
 
+// Random integer within interval [L, R], both L and R included
+qint32 randint(qint32 L, qint32 R);
+
 #endif // COMMANDSET_H

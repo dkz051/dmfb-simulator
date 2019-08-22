@@ -9,7 +9,7 @@
 #include "chipconfig.h"
 #include "commandset.h"
 
-static const qreal acceleration = 2.0;
+static const qreal acceleration = 3.0;
 
 namespace Ui {
 class MainWindow;
