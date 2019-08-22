@@ -106,7 +106,7 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	g->setBrush(color);
 	g->drawRect(QRectF(X * grid, Y * grid, W * grid, H * grid));
 
-	QFont font("Segoe UI");
+	QFont font;
 	font.setPointSizeF(std::min(grid / 4.0, 20.0));
 	g->setFont(font);
 
@@ -174,7 +174,7 @@ void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qr
 	qint32 R = config.rows, C = config.columns;
 	qreal size = getGridSize(W, H, R, C) * 0.75;
 
-	QFont font("Segoe UI");
+	QFont font;
 	font.setPointSizeF(std::max(size, 4.0));
 	g->setFont(font);
 	g->setPen(Qt::black);
