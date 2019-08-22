@@ -27,6 +27,7 @@ void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
 	g->setPen(QPen(Qt::black, 1.0));
+	g->setPen(Qt::PenStyle::SolidLine);
 
 	for (qint32 i = 0; i <= R; ++i) {
 		g->drawLine(QPointF(0.0, i * grid), QPointF(C * grid, i * grid));
@@ -47,6 +48,8 @@ void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->save();
 
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setPen(Qt::PenStyle::NoPen);
 
 	g->setBrush(QColor(192, 192, 192, 255));
 	g->drawRect(QRectF(grid, grid, (R - 2) * grid, (C - 2) * grid));
@@ -120,6 +123,7 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	}
 
 	g->setBrush(color);
+	g->setPen(Qt::PenStyle::NoPen);
 	g->drawRect(QRectF(X * grid, Y * grid, W * grid, H * grid));
 
 	if (withText) {
@@ -127,8 +131,7 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 		font.setPointSizeF(std::min(grid / 4.0, 20.0));
 		g->setFont(font);
 
-		QPen pen(forecolor);
-		g->setPen(pen);
+		g->setPen(forecolor);
 
 		g->drawText(QRectF(X * grid, Y * grid, W * grid, H * grid), Qt::AlignCenter, str);
 	}
@@ -145,16 +148,16 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
 	for (qint32 i = 0; i < R; ++i) {
-		renderPort(grid, -2.0, i, 2.0, 1.0, config.L[i], g, true);
 		renderPort(grid, 0, i, 1.0, 1.0, config.L[i], g, false);
-		renderPort(grid, C, i, 2.0, 1.0, config.R[i], g, true);
+		renderPort(grid, -2.0, i, 2.0, 1.0, config.L[i], g, true);
 		renderPort(grid, C - 1.0, i, 1.0, 1.0, config.R[i], g, false);
+		renderPort(grid, C, i, 2.0, 1.0, config.R[i], g, true);
 	}
 	for (qint32 j = 0; j < C; ++j) {
-		renderPort(grid, j, -2.0, 1.0, 2.0, config.T[j], g, true);
 		renderPort(grid, j, 0, 1.0, 1.0, config.T[j], g, false);
-		renderPort(grid, j, R, 1.0, 2.0, config.B[j], g, true);
+		renderPort(grid, j, -2.0, 1.0, 2.0, config.T[j], g, true);
 		renderPort(grid, j, R - 1.0, 1.0, 1.0, config.B[j], g, false);
+		renderPort(grid, j, R, 1.0, 2.0, config.B[j], g, true);
 	}
 
 	g->restore();

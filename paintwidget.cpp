@@ -12,9 +12,9 @@ void previewWidget::paintEvent(QPaintEvent *)
 
 	qreal W = this->width(), H = this->height();
 
+	renderPortConfigMask(config, W, H, &painter);
 	renderPortType(config, W, H, &painter);
 	renderGrid(config, W, H, &painter);
-	renderPortConfigMask(config, W, H, &painter);
 }
 
 void previewWidget::mousePressEvent(QMouseEvent *e)
