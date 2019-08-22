@@ -77,13 +77,13 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 		case portType::input: {
 			color = Qt::yellow;
 			forecolor = Qt::black;
-			str = "In";
+			str = "Input";
 			break;
 		}
 		case portType::output: {
 			color = Qt::cyan;
 			forecolor = Qt::black;
-			str = "Out";
+			str = "Output";
 			break;
 		}
 		case portType::wash: {

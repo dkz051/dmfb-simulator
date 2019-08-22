@@ -38,15 +38,10 @@ private slots:
 	void on_actionLoadCommandFile_triggered();
 
 private:
-    Ui::MainWindow *ui;
-	cmdTimeSet commands;
+	Ui::MainWindow *ui;
 
-	qint32 totalTime;
-	qint32 cmdCount;
-
-	qint32 idTotal;
-	qint32 newId();
-	void resetId();
+	qreal totalTime;
+	QVector<drop> drops;
 };
 
 #endif // MAINWINDOW_H

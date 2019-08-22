@@ -97,78 +97,21 @@ void MainWindow::dropEvent(QDropEvent *e)
 
 void MainWindow::loadFile(const QString &url)
 {
-	QFile file(url);
+	QString errorMsg;
 
-	if (!file.open(QFile::ReadOnly | QFile::Text)) {
-		QMessageBox::warning(this, tr("Error"), tr("Cannot open the command file specified."));
+	if (!::loadFile(url, ui->pWidget->config, errorMsg, drops, totalTime)) {
+		QMessageBox::warning(this, tr("Error loading command file"), errorMsg);
 		return;
 	}
 
-//	QByteArray data = file.readAll();
-//	ui->txtContent->setText(QString::fromLocal8Bit(data));
-	QTextStream stream(&file);
-
-	cmdCount = 0;
-
-	while (!stream.atEnd()) {
-		std::string line = stream.readLine().toStdString();
-
-		++cmdCount;
-
-		char buf[16];
-
-		qint32 t, x1, y1, x2, y2;
-		sscanf(line.c_str(), "%s", buf);
-
-		switch (buf[1]) {
-			case 'n': { // input
-				sscanf(line.c_str(), "%s%d,%d,%d;", buf, &t, &x1, &y1);
-				commands[t].push_back(command(commandType::Input, t, x1, y1, 0, 0));
-				break;
-			}
-			case 'u': { // output
-				sscanf(line.c_str(), "%s%d,%d,%d;", buf, &t, &x1, &y1);
-				commands[t].push_back(command(commandType::Output, t, x1, y1, 0, 0));
-				break;
-			}
-			case 'o': { // move
-				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
-				commands[t].push_back(command(commandType::Move, t, x1, y1, x2, y2));
-				break;
-			}
-			case 'e': { // merge
-				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
-				commands[t].push_back(command(commandType::Merge, t, x1, y1, x2, y2));
-				break;
-			}
-			case 'p': { // split
-				sscanf(line.c_str(), "%s%d,%d,%d,%d,%d;", buf, &t, &x1, &y1, &x2, &y2);
-				commands[t].push_back(command(commandType::Split, t, x1, y1, x2, y2));
-				break;
-			}
-			case 'i': { // mix
-				// TODO
-				break;
-			}
-			default: { // invalid command
-				QMessageBox::warning(this, tr("Invalid command file"), tr(QString("Unrecognized command on line %1.").arg(cmdCount).toStdString().c_str()));
-				return;
-			}
+	for (qint32 i = 0; i < drops.size(); ++i) {
+		ui->txtContent->append(QString("Drop %1:").arg(i));
+		for (qint32 j = 0; j < drops[i].route.size(); ++j) {
+			ui->txtContent->append(QString("Time %1, x = %2, y = %3").arg(drops[i].route[j].t).arg(drops[i].route[j].x).arg(drops[i].route[j].y));
 		}
+		ui->txtContent->append("------------");
 	}
-
-	if (cmdCount == 0) { // no command read
-		QMessageBox::warning(this, tr("Invalid command file"), tr("Empty file, nothing loaded."));
-	}
-
-	this->resetId();
-	this->totalTime = commands.lastKey();
 
 	ui->actionStart->setEnabled(true);
 	ui->actionStep->setEnabled(true);
-}
-
-void MainWindow::resetId()
-{
-	idTotal = 0;
 }
