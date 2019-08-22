@@ -18,9 +18,12 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
+    ui(new Ui::MainWindow),
+    timer(this)
 {
 	ui->setupUi(this);
+	timer.setInterval(25);
+	connect(&timer, SIGNAL(timeout()), this, SLOT(on_timer_timeout()));
 }
 
 MainWindow::~MainWindow()
@@ -41,13 +44,15 @@ void MainWindow::on_dlgNewChip_accepted(qint32 rows, qint32 columns)
 	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(on_dlgConfigChip_accepted(const chipConfig &)));
 	wndConfigChip->setDimensions(rows, columns);
 	wndConfigChip->show();
+	ui->pWidget->dataLoaded = false;
 }
 
 void MainWindow::on_dlgConfigChip_accepted(const chipConfig &config)
 {
+	displayTime = ui->pWidget->displayTime = 0;
 	ui->actionLoadCommandFile->setEnabled(true);
 	ui->pWidget->config = config;
-	selectFile();
+//	selectFile();
 }
 
 void MainWindow::on_actionExit_triggered()
@@ -83,7 +88,7 @@ void MainWindow::selectFile()
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *e)
 {
-	if (e->mimeData()->hasFormat("text/uri-list")) {
+	if (ui->actionLoadCommandFile->isEnabled() && e->mimeData()->hasFormat("text/uri-list")) {
 		e->acceptProposedAction();
 	}
 }
@@ -99,19 +104,80 @@ void MainWindow::loadFile(const QString &url)
 {
 	QString errorMsg;
 
-	if (!::loadFile(url, ui->pWidget->config, errorMsg, drops, totalTime)) {
+	if (!::loadFile(url, ui->pWidget->config, errorMsg, ui->pWidget->drops, ui->pWidget->minTime, ui->pWidget->maxTime)) {
 		QMessageBox::warning(this, tr("Error loading command file"), errorMsg);
 		return;
 	}
 
-	for (qint32 i = 0; i < drops.size(); ++i) {
-		ui->txtContent->append(QString("Drop %1:").arg(i));
-		for (qint32 j = 0; j < drops[i].route.size(); ++j) {
-			ui->txtContent->append(QString("Time %1, x = %2, y = %3").arg(drops[i].route[j].t).arg(drops[i].route[j].x).arg(drops[i].route[j].y));
-		}
-		ui->txtContent->append("------------");
-	}
-
 	ui->actionStart->setEnabled(true);
 	ui->actionStep->setEnabled(true);
+
+	displayTime = ui->pWidget->displayTime = ui->pWidget->minTime;
+	ui->pWidget->dataLoaded = true;
+}
+
+void MainWindow::render()
+{
+	ui->pWidget->displayTime = displayTime;
+	ui->pWidget->update();
+}
+
+void MainWindow::on_timer_timeout()
+{
+	qint64 thisTime = QDateTime::currentMSecsSinceEpoch();
+	displayTime += thisTime - lastTime;
+	lastTime = thisTime;
+
+	if (displayTime > ui->pWidget->maxTime) {
+		displayTime = ui->pWidget->maxTime;
+		timer.stop();
+		ui->actionStart->setEnabled(true);
+		ui->actionPause->setEnabled(false);
+		ui->actionStep->setEnabled(true);
+		ui->actionRevert->setEnabled(true);
+	}
+
+	render();
+}
+
+void MainWindow::on_actionStart_triggered()
+{
+	timer.start();
+	lastTime = QDateTime::currentMSecsSinceEpoch();
+
+	ui->actionStart->setEnabled(false);
+	ui->actionPause->setEnabled(true);
+	ui->actionStep->setEnabled(false);
+	ui->actionRevert->setEnabled(false);
+
+	ui->actionNewChip->setEnabled(false);
+	ui->actionLoadCommandFile->setEnabled(false);
+}
+
+void MainWindow::on_actionPause_triggered()
+{
+	timer.stop();
+	displayTime = (displayTime / 1000) * 1000; // truncate to seconds
+
+	ui->actionStart->setEnabled(true);
+	ui->actionPause->setEnabled(false);
+	ui->actionStep->setEnabled(true);
+	ui->actionRevert->setEnabled(true);
+
+	ui->actionNewChip->setEnabled(true);
+	ui->actionLoadCommandFile->setEnabled(true);
+
+	render();
+}
+
+void MainWindow::on_actionStep_triggered()
+{
+	displayTime = std::min(displayTime + 1000, ui->pWidget->maxTime);
+	render();
+}
+
+void MainWindow::on_actionRevert_triggered()
+{
+	displayTime = std::max(displayTime - 1000, ui->pWidget->minTime);
+	render();
 }

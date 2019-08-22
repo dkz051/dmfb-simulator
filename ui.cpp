@@ -126,11 +126,6 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
-//	g->setBrush(Qt::green);
-//	g->drawRect(QRectF(0, 0, 10.0, 20.0));
-
-	QFont font("Segoe UI");
-
 	for (qint32 i = 0; i < R; ++i) {
 		renderPort(grid, -2.0, i, 2.0, 1.0, config.L[i], g);
 		renderPort(grid, C, i, 2.0, 1.0, config.R[i], g);
@@ -141,4 +136,47 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	}
 
 	g->restore();
+}
+
+void renderDrops(const chipConfig &config, const QVector<drop> &drops, qreal time, qreal W, qreal H, QPainter *g)
+{
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setClipping(true);
+	g->setClipRect(QRectF(0.0, 0.0, C * grid, R * grid));
+
+	for (qint32 i = 0; i < drops.size(); ++i) {
+		qreal x, y;
+		if (!getRealTimePosition(drops[i], time, x, y)) {
+			continue;
+		};
+		g->setPen(drops[i].color);
+		g->setBrush(drops[i].color);
+		g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), grid * 0.4, grid * 0.4);
+	}
+
+	g->setClipping(false);
+	g->restore();
+}
+
+void renderTime(const chipConfig &config, qreal time, qreal totalTime, qreal W, qreal H, QPainter *g)
+{
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+
+	QFont font("Segoe UI");
+	font.setPointSizeF(std::max(grid * 0.75, 4.0));
+	g->setFont(font);
+	g->setPen(Qt::black);
+
+	QString str = QString("%1").arg(time, 4, 'f', 2, '0');
+	g->drawText(QRectF(0.0, 0.0, W, H), Qt::AlignRight | Qt::AlignTop, str);
 }

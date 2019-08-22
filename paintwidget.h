@@ -7,6 +7,7 @@
 #include <QMouseEvent>
 
 #include "chipconfig.h"
+#include "commandset.h"
 
 class paintWidget : public QWidget
 {
@@ -37,7 +38,13 @@ class displayWidget : public paintWidget
 {
 	Q_OBJECT
 public:
-	using paintWidget::paintWidget;
+	displayWidget(QWidget *parent = nullptr);
+
+	qint64 minTime, maxTime;
+	qint64 displayTime;
+	QVector<drop> drops;
+	bool dataLoaded;
+
 protected:
 	void paintEvent(QPaintEvent *e);
 	void mousePressEvent(QMouseEvent *e);

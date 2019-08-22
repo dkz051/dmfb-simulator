@@ -26,7 +26,9 @@ struct drop
 	QVector<moment> route;
 };
 
-bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<drop> &result, qreal &totalTime);
+bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<drop> &result, qint64 &minTime, qint64 &maxTime);
+
+void moveToPort(qint32 &x, qint32 &y, const chipConfig &config);
 
 bool isPortType(qint32 x, qint32 y, const chipConfig &config, portType T);
 

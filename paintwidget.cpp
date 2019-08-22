@@ -44,16 +44,22 @@ void previewWidget::mousePressEvent(QMouseEvent *e)
 	this->update();
 }
 
+displayWidget::displayWidget(QWidget *parent) : paintWidget(parent), dataLoaded(false) {}
+
 void displayWidget::paintEvent(QPaintEvent *)
 {
 	QPainter painter(this);
 	painter.eraseRect(painter.window());
+	painter.setRenderHints(QPainter::Antialiasing);
 
 	qreal W = this->width(), H = this->height();
 
-	renderGrid(config, W, H, &painter);
 	renderPortType(config, W, H, &painter);
-	//renderPortConfigGrid(config, W, H, &painter);
+	if (dataLoaded) {
+		renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
+		renderDrops(config, drops, displayTime / 1000.0, W, H, &painter);
+	}
+	renderGrid(config, W, H, &painter);
 }
 
 void displayWidget::mousePressEvent(QMouseEvent *e)

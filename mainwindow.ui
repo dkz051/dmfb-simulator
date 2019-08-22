@@ -46,16 +46,6 @@
         <verstretch>0</verstretch>
        </sizepolicy>
       </property>
-      <widget class="QTextBrowser" name="txtContent">
-       <property name="geometry">
-        <rect>
-         <x>0</x>
-         <y>0</y>
-         <width>51</width>
-         <height>31</height>
-        </rect>
-       </property>
-      </widget>
      </widget>
     </item>
    </layout>

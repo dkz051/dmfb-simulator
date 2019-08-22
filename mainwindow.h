@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 #include <QUrl>
+#include <QTimer>
+#include <QDateTime>
 
 #include "chipconfig.h"
 #include "commandset.h"
@@ -35,13 +37,23 @@ private slots:
 
 	void loadFile(const QString &url);
 	void selectFile();
+	void render();
 	void on_actionLoadCommandFile_triggered();
+
+	void on_timer_timeout();
+	void on_actionStart_triggered();
+
+	void on_actionPause_triggered();
+
+	void on_actionStep_triggered();
+
+	void on_actionRevert_triggered();
 
 private:
 	Ui::MainWindow *ui;
 
-	qreal totalTime;
-	QVector<drop> drops;
+	QTimer timer;
+	qint64 lastTime, displayTime;
 };
 
 #endif // MAINWINDOW_H
