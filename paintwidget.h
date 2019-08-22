@@ -42,7 +42,7 @@ public:
 
 	qint64 minTime, maxTime;
 	qint64 displayTime;
-	QVector<drop> drops;
+	QVector<droplet> droplets;
 	bool dataLoaded;
 
 protected:

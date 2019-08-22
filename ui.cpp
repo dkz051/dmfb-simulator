@@ -8,8 +8,8 @@ static const qreal minGridSize = 4.0;
 
 qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns)
 {
-	width *= 0.8;
-	height *= 0.8;
+	width *= 0.95;
+	height *= 0.95;
 	// Determine the size of a single grid.
 	// Port identifier (Input/Output/Wash/Waste) shall take the place of 2 grids.
 	// Grid size is truncated to 4 logical pixels, or at least 4 pixels.
@@ -138,7 +138,7 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g)
 	g->restore();
 }
 
-void renderDrops(const chipConfig &config, const QVector<drop> &drops, qreal time, qreal W, qreal H, QPainter *g)
+void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g)
 {
 	if (!config.valid) return;
 
@@ -151,32 +151,44 @@ void renderDrops(const chipConfig &config, const QVector<drop> &drops, qreal tim
 	g->setClipping(true);
 	g->setClipRect(QRectF(0.0, 0.0, C * grid, R * grid));
 
-	for (qint32 i = 0; i < drops.size(); ++i) {
+	for (qint32 i = 0; i < droplets.size(); ++i) {
+		dropletStatus st;
 		qreal x, y;
-		if (!getRealTimePosition(drops[i], time, x, y)) {
+		if (!getRealTimeStatus(droplets[i], time, st, x, y)) {
 			continue;
 		};
-		g->setPen(drops[i].color);
-		g->setBrush(drops[i].color);
-		g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), grid * 0.4, grid * 0.4);
+		QColor color(st.r, st.g, st.b, st.a);
+		g->setPen(color);
+		g->setBrush(color);
+		g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), st.rx * grid, st.ry * grid);
 	}
 
 	g->setClipping(false);
 	g->restore();
 }
 
-void renderTime(const chipConfig &config, qreal time, qreal totalTime, qreal W, qreal H, QPainter *g)
+void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g)
 {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
-	qreal grid = getGridSize(W, H, R, C);
+	qreal size = getGridSize(W, H, R, C) * 0.75;
 
 	QFont font("Segoe UI");
-	font.setPointSizeF(std::max(grid * 0.75, 4.0));
+	font.setPointSizeF(std::max(size, 4.0));
 	g->setFont(font);
 	g->setPen(Qt::black);
 
-	QString str = QString("%1").arg(time, 4, 'f', 2, '0');
-	g->drawText(QRectF(0.0, 0.0, W, H), Qt::AlignRight | Qt::AlignTop, str);
+	bool flag = false;
+	if (time < 0.0) {
+		flag = true;
+		time = -time;
+	}
+	qint32 sec = qint32(time), dex = qint32((time - sec) * 100);
+
+	g->drawText(QRectF(0.0, 0.0, W - size * 1.5, H), Qt::AlignRight | Qt::AlignTop, (flag ? "-" : "") + QString("%1").arg(sec));
+
+	font.setPointSizeF(std::max(size, 4.0) * 0.6);
+	g->setFont(font);
+	g->drawText(QRectF(W - size * 1.5, 0.0, size * 1.5, H), Qt::AlignLeft | Qt::AlignTop, QString(".%1").arg(dex, 2, 10, QChar('0')));
 }

@@ -9,6 +9,8 @@
 #include "chipconfig.h"
 #include "commandset.h"
 
+static const qreal acceleration = 2.0;
+
 namespace Ui {
 class MainWindow;
 }
@@ -48,6 +50,8 @@ private slots:
 	void on_actionStep_triggered();
 
 	void on_actionRevert_triggered();
+
+	void on_actionReset_triggered();
 
 private:
 	Ui::MainWindow *ui;

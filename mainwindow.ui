@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>480</width>
-    <height>320</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -55,7 +55,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>480</width>
+     <width>640</width>
      <height>20</height>
     </rect>
    </property>
@@ -77,6 +77,8 @@
     <addaction name="separator"/>
     <addaction name="actionStep"/>
     <addaction name="actionRevert"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -84,15 +86,8 @@
     </property>
     <addaction name="actionAboutDmfbSimulator"/>
    </widget>
-   <widget class="QMenu" name="menu_Options">
-    <property name="title">
-     <string>&amp;Options</string>
-    </property>
-    <addaction name="actionOptions"/>
-   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuControl"/>
-   <addaction name="menu_Options"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -109,7 +104,7 @@
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
-    <bool>true</bool>
+    <bool>false</bool>
    </attribute>
    <addaction name="actionNewChip"/>
    <addaction name="actionLoadCommandFile"/>
@@ -119,9 +114,9 @@
    <addaction name="separator"/>
    <addaction name="actionStep"/>
    <addaction name="actionRevert"/>
-   <addaction name="actionOptions"/>
+   <addaction name="separator"/>
+   <addaction name="actionReset"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionNewChip">
    <property name="text">
     <string>&amp;New Chip...</string>
@@ -195,18 +190,21 @@
     <bool>false</bool>
    </property>
    <property name="text">
-    <string>&amp;Revert</string>
+    <string>Re&amp;vert</string>
    </property>
    <property name="shortcut">
     <string>F8</string>
    </property>
   </action>
-  <action name="actionOptions">
+  <action name="actionReset">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
-    <string>&amp;Options...</string>
+    <string>&amp;Reset</string>
    </property>
    <property name="shortcut">
-    <string>F12</string>
+    <string>F9</string>
    </property>
   </action>
  </widget>

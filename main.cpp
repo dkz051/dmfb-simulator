@@ -3,6 +3,8 @@
 
 int main(int argc, char *argv[])
 {
+	srand(unsigned(time(nullptr)));
+
 	QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication a(argc, argv);
     MainWindow w;

@@ -104,7 +104,7 @@ void MainWindow::loadFile(const QString &url)
 {
 	QString errorMsg;
 
-	if (!::loadFile(url, ui->pWidget->config, errorMsg, ui->pWidget->drops, ui->pWidget->minTime, ui->pWidget->maxTime)) {
+	if (!::loadFile(url, ui->pWidget->config, errorMsg, ui->pWidget->droplets, ui->pWidget->minTime, ui->pWidget->maxTime)) {
 		QMessageBox::warning(this, tr("Error loading command file"), errorMsg);
 		return;
 	}
@@ -114,6 +114,8 @@ void MainWindow::loadFile(const QString &url)
 
 	displayTime = ui->pWidget->displayTime = ui->pWidget->minTime;
 	ui->pWidget->dataLoaded = true;
+
+	ui->pWidget->update();
 }
 
 void MainWindow::render()
@@ -125,7 +127,7 @@ void MainWindow::render()
 void MainWindow::on_timer_timeout()
 {
 	qint64 thisTime = QDateTime::currentMSecsSinceEpoch();
-	displayTime += thisTime - lastTime;
+	displayTime += (thisTime - lastTime) * acceleration;
 	lastTime = thisTime;
 
 	if (displayTime > ui->pWidget->maxTime) {
@@ -135,6 +137,7 @@ void MainWindow::on_timer_timeout()
 		ui->actionPause->setEnabled(false);
 		ui->actionStep->setEnabled(true);
 		ui->actionRevert->setEnabled(true);
+		ui->actionReset->setEnabled(true);
 	}
 
 	render();
@@ -149,6 +152,7 @@ void MainWindow::on_actionStart_triggered()
 	ui->actionPause->setEnabled(true);
 	ui->actionStep->setEnabled(false);
 	ui->actionRevert->setEnabled(false);
+	ui->actionReset->setEnabled(false);
 
 	ui->actionNewChip->setEnabled(false);
 	ui->actionLoadCommandFile->setEnabled(false);
@@ -157,12 +161,13 @@ void MainWindow::on_actionStart_triggered()
 void MainWindow::on_actionPause_triggered()
 {
 	timer.stop();
-	displayTime = (displayTime / 1000) * 1000; // truncate to seconds
+	//displayTime = (displayTime / 1000) * 1000; // truncate to seconds
 
 	ui->actionStart->setEnabled(true);
 	ui->actionPause->setEnabled(false);
 	ui->actionStep->setEnabled(true);
 	ui->actionRevert->setEnabled(true);
+	ui->actionReset->setEnabled(true);
 
 	ui->actionNewChip->setEnabled(true);
 	ui->actionLoadCommandFile->setEnabled(true);
@@ -172,12 +177,20 @@ void MainWindow::on_actionPause_triggered()
 
 void MainWindow::on_actionStep_triggered()
 {
-	displayTime = std::min(displayTime + 1000, ui->pWidget->maxTime);
+	displayTime = qint32(floor(displayTime / 1000.0) + 1.0) * 1000;
+	displayTime = std::min(displayTime, ui->pWidget->maxTime);
 	render();
 }
 
 void MainWindow::on_actionRevert_triggered()
 {
-	displayTime = std::max(displayTime - 1000, ui->pWidget->minTime);
+	displayTime = qint32(ceil(displayTime / 1000.0) - 1.0) * 1000;
+	displayTime = std::max(displayTime, ui->pWidget->minTime);
+	render();
+}
+
+void MainWindow::on_actionReset_triggered()
+{
+	displayTime = ui->pWidget->minTime;
 	render();
 }

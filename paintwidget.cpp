@@ -57,13 +57,15 @@ void displayWidget::paintEvent(QPaintEvent *)
 	renderPortType(config, W, H, &painter);
 	if (dataLoaded) {
 		renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
-		renderDrops(config, drops, displayTime / 1000.0, W, H, &painter);
+		renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
 	}
 	renderGrid(config, W, H, &painter);
 }
 
-void displayWidget::mousePressEvent(QMouseEvent *e)
+void displayWidget::mousePressEvent(QMouseEvent *)
 {
+	// TODO: Toggle obstacle (of wash droplets) status when clicked
+
 /*	qreal W = this->width(), H = this->height();
 	qint32 R = config.rows, C = config.columns;
 
