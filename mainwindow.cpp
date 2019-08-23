@@ -1,10 +1,6 @@
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "dlgnewchip.h"
-#include "frmconfigchip.h"
-#include "dlgabout.h"
-#include "commandset.h"
-#include "ui.h"
+
+#include <string>
 
 #include <QMessageBox>
 #include <QFileDialog>
@@ -15,15 +11,32 @@
 #include <QDropEvent>
 #include <QTextStream>
 
-#include <string>
+#include "dlgabout.h"
+#include "dlgnewchip.h"
+#include "frmconfigchip.h"
 
-static const qreal acceleration = 3.0;
+#include "ui_mainwindow.h"
+
+#include "ui.h"
+#include "commandset.h"
+
+static const qreal acceleration = 1.0;
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false) {
 	ui->setupUi(this);
 	timer.setInterval(25);
-	connect(&timer, SIGNAL(timeout()), this, SLOT(on_timer_timeout()));
+	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 	ui->picDisplay->installEventFilter(this);
+
+	sndMove.setSource(QUrl("qrc:/sounds/move.wav"));
+	sndMerge.setSource(QUrl("qrc:/sounds/merge.wav"));
+	sndSplit.setSource(QUrl("qrc:/sounds/split.wav"));
+	sndSplitting.setSource(QUrl("qrc:/sounds/splitting.wav"));
+
+	sndMove.setLoopCount(1);
+	sndMerge.setLoopCount(1);
+	sndSplit.setLoopCount(1);
+	sndSplitting.setLoopCount(1);
 }
 
 MainWindow::~MainWindow() {
@@ -32,20 +45,20 @@ MainWindow::~MainWindow() {
 
 void MainWindow::on_actionNewChip_triggered() {
 	dlgNewChip wndNewChip(this);
-	connect(&wndNewChip, SIGNAL(accepted(qint32, qint32)), this, SLOT(on_dlgNewChip_accepted(qint32, qint32)));
+	connect(&wndNewChip, SIGNAL(accepted(qint32, qint32)), this, SLOT(onDlgNewChipAccepted(qint32, qint32)));
 	wndNewChip.exec();
 }
 
-void MainWindow::on_dlgNewChip_accepted(qint32 rows, qint32 columns) {
+void MainWindow::onDlgNewChipAccepted(qint32 rows, qint32 columns) {
 	frmConfigChip *wndConfigChip = new frmConfigChip(this);
-	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(on_dlgConfigChip_accepted(const chipConfig &)));
+	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(onDlgConfigChipAccepted(const chipConfig &)));
 	wndConfigChip->setDimensions(rows, columns);
 	wndConfigChip->show();
 
 	dataLoaded = false;
 }
 
-void MainWindow::on_dlgConfigChip_accepted(const chipConfig &config) {
+void MainWindow::onDlgConfigChipAccepted(const chipConfig &config) {
 	displayTime = 0;
 	this->config = config;
 	ui->actionLoadCommandFile->setEnabled(true);
@@ -93,7 +106,7 @@ void MainWindow::dropEvent(QDropEvent *e) {
 void MainWindow::loadFile(const QString &url) {
 	QString errorMsg;
 
-	if (!::loadFile(url, config, errorMsg, droplets, minTime, maxTime)) {
+	if (!::loadFile(url, config, errorMsg, droplets, minTime, maxTime, sounds)) {
 		QMessageBox::warning(this, tr("Error loading command file"), errorMsg);
 		return;
 	}
@@ -111,10 +124,35 @@ void MainWindow::render() {
 	this->update();
 }
 
-void MainWindow::on_timer_timeout() {
+void MainWindow::onTimeout() {
 	qint64 thisTime = QDateTime::currentMSecsSinceEpoch();
+	qint64 lastDisplay = displayTime;
+
 	displayTime += (thisTime - lastTime) * acceleration;
 	lastTime = thisTime;
+
+	auto iter = sounds.lowerBound(lastDisplay / 1000.0);
+	auto jter = sounds.lowerBound(displayTime / 1000.0);
+
+	if (iter != jter) {
+		qint32 sndFx = jter.value();
+		if (sndFx & sndFxMove) {
+			sndMove.stop();
+			sndMove.play();
+		}
+		if (sndFx & sndFxMerge) {
+			sndMerge.stop();
+			sndMerge.play();
+		}
+		if (sndFx & sndFxSplit) {
+			sndSplit.stop();
+			sndSplit.play();
+		}
+		if (sndFx & sndFxSplitting) {
+			sndSplitting.stop();
+			sndSplitting.play();
+		}
+	}
 
 	if (displayTime > maxTime) {
 		displayTime = maxTime;

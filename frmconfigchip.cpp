@@ -1,11 +1,12 @@
 #include "frmconfigchip.h"
-#include "ui_frmconfigchip.h"
-
-#include "ui.h"
 
 #include <QMessageBox>
 #include <QPaintEvent>
 #include <QMouseEvent>
+
+#include "ui_frmconfigchip.h"
+
+#include "ui.h"
 
 frmConfigChip::frmConfigChip(QWidget *parent) : QMainWindow(parent), ui(new Ui::frmConfigChip) {
 	ui->setupUi(this);
@@ -15,40 +16,17 @@ frmConfigChip::frmConfigChip(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
 	timer = new QTimer;
 	timer->setInterval(25);
-	connect(timer, SIGNAL(timeout()), this, SLOT(timerRefresh()));
 	timer->start();
 
 	ui->pWidget->installEventFilter(this);
 }
 
 void frmConfigChip::setDimensions(qint32 rows, qint32 columns) {
-	this->rows = rows;
-	this->columns = columns;
 	config.init(rows, columns);
 }
 
 frmConfigChip::~frmConfigChip() {
 	delete ui;
-}
-
-void frmConfigChip::on_optInput_clicked() {
-	currentType = portType::input;
-}
-
-void frmConfigChip::on_optOutput_clicked() {
-	currentType = portType::output;
-}
-
-void frmConfigChip::on_optWash_clicked() {
-	currentType = portType::wash;
-}
-
-void frmConfigChip::on_optWaste_clicked() {
-	currentType = portType::waste;
-}
-
-void frmConfigChip::on_optNone_clicked() {
-	currentType = portType::none;
 }
 
 void frmConfigChip::on_buttonBox_accepted() {
@@ -99,28 +77,41 @@ bool frmConfigChip::eventFilter(QObject *o, QEvent *e) {
 			qint32 X = int(floor((ev->x() - (W - grid * C) / 2.0) / grid));
 			qint32 Y = int(floor((ev->y() - (H - grid * R) / 2.0) / grid));
 
+			portType type = portType::none;
+			if (ui->optNone->isChecked()) {
+				type = portType::none;
+			} else if (ui->optInput->isChecked()) {
+				type = portType::input;
+			} else if (ui->optOutput->isChecked()) {
+				type = portType::output;
+			} else if (ui->optWash->isChecked()) {
+				type = portType::wash;
+			} else if (ui->optWaste->isChecked()) {
+				type = portType::waste;
+			}
+
 			if (Y >= 0 && Y < R) {
 				if (X >= -2 && X <= 0 && Y + 1 < R) { // left
-					config.L[Y] = currentType;
+					config.L[Y] = type;
 				} else if (X >= C - 1 && X <= C + 1 && Y > 0) { // right
-					config.R[Y] = currentType;
+					config.R[Y] = type;
 				}
 			}
 			if (X >= 0 && X < C) {
 				if (Y >= -2 && Y <= 0 && X > 0) { // top
-					config.T[X] = currentType;
+					config.T[X] = type;
 				} else if (Y >= R - 1 && Y <= R + 1 && X + 1 < C) { // bottom
-					config.B[X] = currentType;
+					config.B[X] = type;
 				}
 			}
 			if (Y >= -2 && Y <= 0 && X == 0) { // top-left
-				config.L[0] = currentType;
+				config.L[0] = type;
 			} else if (X >= C - 1 && X <= C + 1 && Y == 0) { // top-right
-				config.T[C - 1] = currentType;
+				config.T[C - 1] = type;
 			} else if (Y >= R - 1 && Y <= R + 1 && X == C - 1) { // bottom-right
-				config.R[R - 1] = currentType;
+				config.R[R - 1] = type;
 			} else if (X >= -2 && X <= 0 && Y == R - 1) { // bottom-left
-				config.B[0] = currentType;
+				config.B[0] = type;
 			}
 
 			p->update();

@@ -1,8 +1,8 @@
 #ifndef CHIPCONFIG_H
 #define CHIPCONFIG_H
 
-#include <QIntegerForSize>
 #include <QVector>
+#include <QIntegerForSize>
 
 enum portType {
 	none, input, output, wash, waste

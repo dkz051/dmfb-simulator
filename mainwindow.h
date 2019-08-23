@@ -1,10 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
-#include <QMainWindow>
 #include <QUrl>
 #include <QTimer>
 #include <QDateTime>
+#include <QMainWindow>
+#include <QSoundEffect>
 
 #include "chipconfig.h"
 #include "commandset.h"
@@ -29,8 +30,8 @@ protected:
 private slots:
 	void on_actionNewChip_triggered();
 
-	void on_dlgNewChip_accepted(qint32 rows, qint32 columns);
-	void on_dlgConfigChip_accepted(const chipConfig &config);
+	void onDlgNewChipAccepted(qint32 rows, qint32 columns);
+	void onDlgConfigChipAccepted(const chipConfig &config);
 
 	void on_actionExit_triggered();
 
@@ -41,7 +42,7 @@ private slots:
 	void render();
 	void on_actionLoadCommandFile_triggered();
 
-	void on_timer_timeout();
+	void onTimeout();
 	void on_actionStart_triggered();
 
 	void on_actionPause_triggered();
@@ -62,6 +63,9 @@ private:
 	QVector<droplet> droplets;
 	bool dataLoaded;
 	chipConfig config;
+
+	QSoundEffect sndMove, sndMerge, sndSplitting, sndSplit;
+	soundList sounds;
 };
 
 #endif // MAINWINDOW_H

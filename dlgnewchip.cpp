@@ -1,7 +1,8 @@
 #include "dlgnewchip.h"
-#include "ui_dlgnewchip.h"
 
 #include <QMessageBox>
+
+#include "ui_dlgnewchip.h"
 
 dlgNewChip::dlgNewChip(QWidget *parent) : QDialog(parent), ui(new Ui::dlgNewChip) {
 	ui->setupUi(this);

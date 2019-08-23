@@ -1,10 +1,9 @@
 #ifndef FRMCONFIGCHIP_H
 #define FRMCONFIGCHIP_H
 
-#include <QMainWindow>
-#include <QPainter>
-#include <QGraphicsScene>
 #include <QTimer>
+#include <QPainter>
+#include <QMainWindow>
 
 #include "chipconfig.h"
 
@@ -29,26 +28,13 @@ signals:
 	void accepted(const chipConfig &config);
 
 private slots:
-	void on_optInput_clicked();
-
-	void on_optOutput_clicked();
-
-	void on_optWash_clicked();
-
-	void on_optWaste_clicked();
-
-	void on_optNone_clicked();
-
 	void on_buttonBox_accepted();
 
 private:
 	Ui::frmConfigChip *ui;
-	qint32 rows, columns;
 
 	QTimer *timer;
 	chipConfig config;
-	portType currentType;
 };
-
 
 #endif // FRMCONFIGCHIP_H

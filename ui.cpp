@@ -1,7 +1,6 @@
 #include "ui.h"
 
 #include <QFont>
-#include <QPalette>
 #include <QDebug>
 
 static const qreal minGridSize = 4.0;

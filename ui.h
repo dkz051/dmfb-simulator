@@ -2,6 +2,7 @@
 #define UI_H
 
 #include <QPainter>
+
 #include "chipconfig.h"
 #include "commandset.h"
 
