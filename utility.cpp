@@ -11,8 +11,8 @@ const qreal eps = 1e-8;
 const qreal inf = 1e100;
 
 const qreal radius = 0.4;
-const qreal rContaminant = 0.1;
-const qint32 contaminationDots = 5;
+const qreal rContaminant = 0.2;
+const qint32 contaminationDots = 10;
 
 const qreal acceleration = 1.0;
 
@@ -511,10 +511,16 @@ qreal easing(qreal t) {
 }
 
 qint32 randInt(qint32 L, qint32 R) {
-	qint32 ans = qint32(rand() / qreal(RAND_MAX) * (R - L)) + L;
+	if (L > R) {
+		std::swap(L, R);
+	}
+	qint32 ans = qint32(rand() / qreal(RAND_MAX) * (R - L + 1) + L - 0.5);
 	return ans;
 }
 
 qreal randReal(qreal L, qreal R) {
+	if (L > R) {
+		std::swap(L, R);
+	}
 	return rand() / qreal(RAND_MAX) * (R - L) + L;
 }

@@ -241,19 +241,21 @@ void renderContaminants(const ChipConfig &config, qreal W, qreal H, quint32 rand
 	qint32 R = config.rows, C = config.columns;
 	qreal grid = getGridSize(W, H, R, C);
 
-	srand(randSeed);
 	g->save();
 
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
-	g->setPen(Qt::black);
+	g->setPen(Qt::PenStyle::NoPen);
 	for (qint32 x = 0; x < C; ++x) {
 		for (qint32 y = 0; y < R; ++y) {
-			for (auto s: contaminants[x][y]) {
-				auto it = droplets[s][std::min(droplets[s].size() - 1, 1)];
-				g->setBrush(QColor::fromHsv(it.h, it.s, it.v, 0xff));
-				for (qint32 cnt = 1; cnt <= randInt(1, contaminationDots); ++cnt) {
-					g->drawEllipse(QPointF((x + randReal(rContaminant, 1.0 - rContaminant)) * grid, (y + randReal(rContaminant, 1.0 - rContaminant)) * grid), rContaminant * grid, rContaminant * grid);
+			srand(randSeed + quint32(((x + 1) * R + 1) * (y + 1)));
+			qint32 contaminated = contaminants[x][y].size();
+			qint32 marks = qint32(ceil(randInt(4, contaminationDots) / qreal(contaminated)));
+			for (qint32 cnt = 1; cnt <= marks; ++cnt) {
+				for (auto s: contaminants[x][y]) {
+					auto it = droplets[s][std::min(droplets[s].size() - 1, 1)];
+					g->setBrush(QColor::fromHsv(it.h, it.s, it.v, 0x7f));
+					g->drawEllipse(QPointF((x + randReal(0.0, 1.0)) * grid, (y + randReal(0.0, 1.0)) * grid), rContaminant * grid, rContaminant * grid);
 				}
 			//	g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), rContaminant * grid, rContaminant * grid);
 			}
