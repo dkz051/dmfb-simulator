@@ -227,6 +227,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			qreal W = p->width(), H = p->height();
 
 			renderPortType(config, W, H, &painter);
+			renderGridAxisNumber(config, W, H, &painter);
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
 				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);

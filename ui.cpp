@@ -211,3 +211,27 @@ void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qr
 	g->setPen(QColor(192, 192, 192, 255));
 	g->drawText(QRectF(0.0, size * 0.5, W, H), Qt::AlignRight | Qt::AlignTop, QString("/%1").arg(maxTime, 1, 'f', 0, QChar('0')));
 }
+
+void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setPen(Qt::black);
+	for (qint32 i = 1; i <= R; ++i) {
+		g->drawText(QRectF(-2.1 * grid, (i - 1) * grid, 2.0 * grid, grid), QString("%1").arg(R - i + 1), Qt::AlignRight | Qt::AlignVCenter);
+
+		g->drawText(QRectF((C + 0.1) * grid, (i - 1) * grid, 2.0 * grid, grid), QString("%1").arg(R - i + 1), Qt::AlignLeft | Qt::AlignVCenter);
+	}
+	for (qint32 j = 1; j <= C; ++j) {
+		g->drawText(QRectF((j - 1) * grid, -2.1 * grid, grid, 2.0 * grid), QString("%1").arg(j), Qt::AlignHCenter | Qt::AlignBottom);
+
+		g->drawText(QRectF((j - 1) * grid, (R + 0.1) * grid, grid, 2.0 * grid), QString("%1").arg(j), Qt::AlignHCenter | Qt::AlignTop);
+	}
+
+	g->restore();
+}

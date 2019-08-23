@@ -64,6 +64,7 @@ bool frmConfigChip::eventFilter(QObject *o, QEvent *e) {
 
 			renderPortConfigMask(config, W, H, &painter);
 			renderPortType(config, W, H, &painter);
+			renderGridAxisNumber(config, W, H, &painter);
 			renderGrid(config, W, H, &painter);
 			return true;
 		} else if (e->type() == QEvent::MouseButtonPress) {
