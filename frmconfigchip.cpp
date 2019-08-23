@@ -39,13 +39,13 @@ void frmConfigChip::on_buttonBox_accepted() {
 		++count[config.B[j]];
 		++count[config.T[j]];
 	}
-	if (count[portType::input] == 0) {
+	if (count[PortType::input] == 0) {
 		QMessageBox::warning(this, tr("Warning"), tr("Please specify at least one input port."));
-	} else if (count[portType::output] != 1) {
+	} else if (count[PortType::output] != 1) {
 		QMessageBox::warning(this, tr("Warning"), tr("Please specify exactly one output port."));
-	} else if (count[portType::wash] == 0 && count[portType::waste] != 0) {
+	} else if (count[PortType::wash] == 0 && count[PortType::waste] != 0) {
 		QMessageBox::warning(this, tr("Warning"), tr("Waste port is not allowed without wash input port."));
-	} else if (count[portType::wash] != 0 && count[portType::waste] != 1) {
+	} else if (count[PortType::wash] != 0 && count[PortType::waste] != 1) {
 		QMessageBox::warning(this, tr("Warning"), tr("Please specify exactly one waste port with wash input port."));
 	} else {
 		this->close();
@@ -78,17 +78,17 @@ bool frmConfigChip::eventFilter(QObject *o, QEvent *e) {
 			qint32 X = int(floor((ev->x() - (W - grid * C) / 2.0) / grid));
 			qint32 Y = int(floor((ev->y() - (H - grid * R) / 2.0) / grid));
 
-			portType type = portType::none;
+			PortType type = PortType::none;
 			if (ui->optNone->isChecked()) {
-				type = portType::none;
+				type = PortType::none;
 			} else if (ui->optInput->isChecked()) {
-				type = portType::input;
+				type = PortType::input;
 			} else if (ui->optOutput->isChecked()) {
-				type = portType::output;
+				type = PortType::output;
 			} else if (ui->optWash->isChecked()) {
-				type = portType::wash;
+				type = PortType::wash;
 			} else if (ui->optWaste->isChecked()) {
-				type = portType::waste;
+				type = PortType::waste;
 			}
 
 			if (Y >= 0 && Y < R) {

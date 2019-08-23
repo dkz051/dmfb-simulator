@@ -5,7 +5,7 @@
 #include <QPainter>
 #include <QMainWindow>
 
-#include "chipconfig.h"
+#include "utility.h"
 
 namespace Ui {
 	class frmConfigChip;

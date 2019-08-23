@@ -18,7 +18,7 @@
 #include "ui_mainwindow.h"
 
 #include "ui.h"
-#include "commandset.h"
+#include "utility.h"
 
 static const qreal acceleration = 1.0;
 

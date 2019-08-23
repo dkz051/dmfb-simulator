@@ -14,7 +14,7 @@ qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns) {
 	return std::max(std::min(width / (columns + 4), height / (rows + 4)), minGridSize);
 }
 
-void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+void renderGrid(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -36,7 +36,7 @@ void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	g->restore();
 }
 
-void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+void renderPortConfigMask(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -53,7 +53,7 @@ void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+void renderPortConfigGrid(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -82,36 +82,36 @@ void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPainter *g, bool withText) {
+void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, PortType T, QPainter *g, bool withText) {
 	QColor color, forecolor;
 	QString str;
 
 	switch (T) {
-		case portType::input: {
+		case PortType::input: {
 			color = Qt::yellow;
 			forecolor = Qt::black;
 			str = "Input";
 			break;
 		}
-		case portType::output: {
+		case PortType::output: {
 			color = Qt::cyan;
 			forecolor = Qt::black;
 			str = "Output";
 			break;
 		}
-		case portType::wash: {
+		case PortType::wash: {
 			color = Qt::green;
 			forecolor = Qt::black;
 			str = "Wash";
 			break;
 		}
-		case portType::waste: {
+		case PortType::waste: {
 			color = Qt::red;
 			forecolor = Qt::white;
 			str = "Waste";
 			break;
 		}
-		case portType::none: {
+		case PortType::none: {
 			return;
 		}
 	}
@@ -131,7 +131,7 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, portType T, QPai
 	}
 }
 
-void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+void renderPortType(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -156,7 +156,7 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g) {
 	g->restore();
 }
 
-void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g) {
+void renderDroplets(const ChipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -169,7 +169,7 @@ void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, 
 	g->setClipRect(QRectF(0.0, 0.0, C * grid, R * grid));
 
 	for (qint32 i = 0; i < droplets.size(); ++i) {
-		dropletStatus st;
+		DropletStatus st;
 		qreal x, y;
 		if (!getRealTimeStatus(droplets[i], time, st, x, y)) {
 			continue;
@@ -184,7 +184,7 @@ void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, 
 	g->restore();
 }
 
-void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g) {
+void renderTime(const ChipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qreal size = getGridSize(W, H, 8, 8) * 0.75;
@@ -211,7 +211,7 @@ void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qr
 	g->drawText(QRectF(0.0, size * 0.5, W, H), Qt::AlignRight | Qt::AlignTop, QString("/%1").arg(maxTime, 1, 'f', 0, QChar('0')));
 }
 
-void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *g) {
+void renderGridAxisNumber(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -235,4 +235,4 @@ void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderContaminants(const chipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g) {}
+void renderContaminants(const ChipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g) {}

@@ -25,23 +25,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 CONFIG += c++11
 
 SOURCES += \
-        chipconfig.cpp \
-        commandset.cpp \
         dlgabout.cpp \
         dlgnewchip.cpp \
         frmconfigchip.cpp \
         main.cpp \
         mainwindow.cpp \
-        ui.cpp
+        ui.cpp \
+        utility.cpp
 
 HEADERS += \
-        chipconfig.h \
-        commandset.h \
         dlgabout.h \
         dlgnewchip.h \
         frmconfigchip.h \
         mainwindow.h \
-        ui.h
+        ui.h \
+        utility.h
 
 FORMS += \
         dlgabout.ui \

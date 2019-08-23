@@ -3,8 +3,7 @@
 
 #include <QPainter>
 
-#include "chipconfig.h"
-#include "commandset.h"
+#include "utility.h"
 
 qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns);
 

@@ -7,8 +7,7 @@
 #include <QMainWindow>
 #include <QSound>
 
-#include "chipconfig.h"
-#include "commandset.h"
+#include "utility.h"
 
 namespace Ui {
 	class MainWindow;
