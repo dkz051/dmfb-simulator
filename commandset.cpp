@@ -247,7 +247,7 @@ bool loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 
 			maxTime = std::max(maxTime, qint64(s.t * 1000));
 		} else if (c.type == commandType::Merged) {
-			qint32 id = findIdFromPosition(c.x1, c.y1);
+			qint32 id = findIdFromPosition(c.x3, c.y3);
 
 			assert(id >= 0 && id < result.size());
 
@@ -298,6 +298,7 @@ bool loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 				iter.b
 			); // s: before split
 
+			result[id].push_back(iter);
 			result[id].push_back(s);
 
 			posMap[std::make_pair(c.x1, c.y1)] = id;

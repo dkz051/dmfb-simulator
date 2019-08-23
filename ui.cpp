@@ -206,7 +206,7 @@ void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qr
 
 	font.setPointSizeF(std::max(size, 4.0) * 0.6);
 	g->setFont(font);
-	g->drawText(QRectF(W - size * 2, 0.0, size * 2, H), Qt::AlignLeft | Qt::AlignTop, QString(".%1").arg(dex, 2, 10, QChar('0')));
+	g->drawText(QRectF(W - size * 2, 0.0, size * 2, H), Qt::AlignLeft | Qt::AlignTop, QString("%1").arg(dex, 2, 10, QChar('0')));
 
 	g->setPen(QColor(192, 192, 192, 255));
 	g->drawText(QRectF(0.0, size * 0.5, W, H), Qt::AlignRight | Qt::AlignTop, QString("/%1").arg(maxTime, 1, 'f', 0, QChar('0')));

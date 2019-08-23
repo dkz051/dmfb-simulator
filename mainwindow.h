@@ -5,7 +5,7 @@
 #include <QTimer>
 #include <QDateTime>
 #include <QMainWindow>
-#include <QSoundEffect>
+#include <QSound>
 
 #include "chipconfig.h"
 #include "commandset.h"
@@ -53,6 +53,7 @@ private slots:
 
 	void on_actionReset_triggered();
 
+	void playSound(qint32 sounds);
 private:
 	Ui::MainWindow *ui;
 
@@ -64,7 +65,7 @@ private:
 	bool dataLoaded;
 	chipConfig config;
 
-	QSoundEffect sndMove, sndMerge, sndSplitting, sndSplit;
+	QSound sndMove, sndMerge, sndSplitting, sndSplit;
 	soundList sounds;
 	errorList errors;
 };

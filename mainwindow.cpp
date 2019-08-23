@@ -22,21 +22,16 @@
 
 static const qreal acceleration = 1.0;
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false) {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav") {
 	ui->setupUi(this);
 	timer.setInterval(25);
 	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 	ui->picDisplay->installEventFilter(this);
 
-	sndMove.setSource(QUrl("qrc:/sounds/move.wav"));
-	sndMerge.setSource(QUrl("qrc:/sounds/merge.wav"));
-	sndSplit.setSource(QUrl("qrc:/sounds/split.wav"));
-	sndSplitting.setSource(QUrl("qrc:/sounds/splitting.wav"));
-
-	sndMove.setLoopCount(1);
-	sndMerge.setLoopCount(1);
-	sndSplit.setLoopCount(1);
-	sndSplitting.setLoopCount(1);
+	sndMove.setLoops(1);
+	sndMerge.setLoops(1);
+	sndSplit.setLoops(1);
+	sndSplitting.setLoops(1);
 }
 
 MainWindow::~MainWindow() {
@@ -133,27 +128,8 @@ void MainWindow::onTimeout() {
 	auto jter = sounds.lowerBound(displayTime / 1000.0);
 
 	if (iter != jter) {
-		qint32 sndFx = iter.value();
-		if (sndFx & sndFxMove) {
-			sndMove.stop();
-			sndMove.play();
-		}
-		if (sndFx & sndFxMerge) {
-			sndMerge.stop();
-			sndMerge.play();
-		}
-		if (sndFx & sndFxSplit) {
-			sndSplit.stop();
-			sndSplit.play();
-		}
-		if (sndFx & sndFxSplitting) {
-			sndSplitting.stop();
-			sndSplitting.play();
-		}
+		playSound(iter.value());
 	}
-
-	//auto kter = errors.lowerBound(lastDisplay / 1000.0);
-	//auto lter = errors.lowerBound(displayTime / 1000.0);
 
 	auto kter = std::lower_bound(errors.begin(), errors.end(), lastDisplay / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
 	auto lter = std::lower_bound(errors.begin(), errors.end(), displayTime / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
@@ -187,7 +163,7 @@ void MainWindow::on_actionStart_triggered() {
 
 void MainWindow::on_actionPause_triggered() {
 	timer.stop();
-	//displayTime = (displayTime / 1000) * 1000; // truncate to seconds
+	//displayTime = ceil(displayTime / 1000.0) * 1000; // set to the next second
 
 	ui->actionStart->setEnabled(true);
 	ui->actionPause->setEnabled(false);
@@ -243,4 +219,23 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 		}
 	}
 	return false;
+}
+
+void MainWindow::playSound(qint32 sounds) {
+	sndMove.stop();
+	sndMerge.stop();
+	sndSplit.stop();
+	sndSplitting.stop();
+	if (sounds & sndFxMove) {
+		sndMove.play();
+	}
+	if (sounds & sndFxMerge) {
+		sndMerge.play();
+	}
+	if (sounds & sndFxSplit) {
+		sndSplit.play();
+	}
+	if (sounds & sndFxSplitting) {
+		sndSplitting.play();
+	}
 }
