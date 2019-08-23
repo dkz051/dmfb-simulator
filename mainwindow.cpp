@@ -22,7 +22,7 @@
 
 static const qreal acceleration = 1.0;
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav") {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav"), error(-2, "") {
 	ui->setupUi(this);
 	timer.setInterval(25);
 	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -109,7 +109,7 @@ void MainWindow::dropEvent(QDropEvent *e) {
 }
 
 void MainWindow::loadFile(const QString &url) {
-	::loadFile(url, config, droplets, minTime, maxTime, sounds, errors);
+	::loadFile(url, config, droplets, minTime, maxTime, sounds, error);
 	maxTime = (maxTime / 1000) * 1000; // Truncate to seconds (in case any command failed)
 
 	ui->actionStart->setEnabled(true);
@@ -139,18 +139,15 @@ void MainWindow::onTimeout() {
 		playSound(iter.value());
 	}
 
-	auto kter = std::lower_bound(errors.begin(), errors.end(), lastDisplay / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
-	auto lter = std::lower_bound(errors.begin(), errors.end(), displayTime / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
-
-	if (kter != lter) {
-		on_actionPause_triggered();
-		sndError.play();
-		QMessageBox::warning(this, tr("Error"), kter->msg);
-	}
-
 	if (displayTime > maxTime) {
 		displayTime = maxTime;
 		on_actionPause_triggered();
+	}
+
+	if (lastDisplay / 1000 < error.t && displayTime / 1000 >= error.t) {
+		on_actionPause_triggered();
+		sndError.play();
+		QMessageBox::warning(this, tr("Error"), error.msg);
 	}
 
 	render();

@@ -35,7 +35,7 @@ dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x,
 	return ans;
 }
 
-void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorList &errors) {
+void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorLog &error) {
 	QFile file(url);
 	file.open(QFile::ReadOnly | QFile::Text);
 	QTextStream fs(&file);
@@ -75,6 +75,8 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 	qint32 count = 0;
 
 	minTime = maxTime = 0;
+
+	error = errorLog(-2, "");
 
 	while (!fs.atEnd()) {
 		QStringList tokens = fs.readLine()
@@ -158,7 +160,6 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 
 	result.clear();
 	sounds.clear();
-	errors.clear();
 
 	QVector<std::pair<qint32, qint32>> removeList;
 	for (qint32 i = 0; i < commandList.size(); ++i) {
@@ -167,7 +168,7 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 
 			if (!isPortType(c.x1, c.y1, config, portType::input)) {
-				errors.push_back(errorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 			dropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randint(0, 255), randint(0, 255), randint(0, 255));
@@ -175,9 +176,8 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			moveToPort(c.x1, c.y1, config);
 			dropletStatus mnt0(c.t - 1, c.x1, c.y1, 0, 0, 0, mnt.r, mnt.g, mnt.b);
 
-			//posMap[std::make_pair(mnt.x, mnt.y)] = count++;
 			if (!putDroplet(mnt.x, mnt.y, count++)) {
-				errors.push_back(errorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): static distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): static distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -190,12 +190,12 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errors.push_back(errorLog(c.t, QString("Cannot output a droplet on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot output a droplet on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
 			if (!isPortType(c.x1, c.y1, config, portType::output)) {
-				errors.push_back(errorLog(c.t, QString("Cannot output the droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot output the droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -209,7 +209,6 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 
 			result[id].push_back(mnt);
 			result[id].push_back(mnt1);
-		//	posMap.remove(std::make_pair(mnt.x, mnt.y));
 			removeList.push_back(std::make_pair(mnt.x, mnt.y));
 		} else if (c.type == commandType::Move || c.type == commandType::Mix) {
 			maxTime = std::max(maxTime, c.t * qint64(1000));
@@ -217,7 +216,7 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errors.push_back(errorLog(c.t, QString("Cannot %1 on time %2, at (%3, %4): no droplet here.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot %1 on time %2, at (%3, %4): no droplet here.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -227,12 +226,10 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.r, iter.g, iter.b);
 
 			result[id].push_back(mnt1);
-		//	posMap.remove(std::make_pair(mnt1.x, mnt1.y));
 			removeList.push_back(std::make_pair(mnt1.x, mnt1.y));
 
-			//posMap[std::make_pair(mnt2.x, mnt2.y)] = id;
 			if (!putDroplet(mnt2.x, mnt2.y, id)) {
-				errors.push_back(errorLog(c.t, QString("Cannot %1 on time %2, from (%3, %4) to (%5, %6): dynamic distance constraint failed.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2)));
+				error = errorLog(c.t, QString("Cannot %1 on time %2, from (%3, %4) to (%5, %6): dynamic distance constraint failed.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
 				break;
 			}
 
@@ -248,7 +245,7 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			qint32 id2 = findIdFromPosition(c.x2, c.y2);
 
 			if (id1 < 0 || id1 >= result.size() || id2 < 0 || id2 >= result.size()) {
-				errors.push_back(errorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2)));
+				error = errorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
 				break;
 			}
 
@@ -293,12 +290,9 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 
 			assert(id >= 0 && id < result.size());
 
-		//	posMap.remove(std::make_pair(c.x1, c.y1));
-		//	posMap.remove(std::make_pair(c.x2, c.y2));
-		//	posMap.remove(std::make_pair(c.x3, c.y3));
 			removeList.push_back(std::make_pair(c.x1, c.y1));
 			removeList.push_back(std::make_pair(c.x2, c.y2));
-			//removeList.push_back(std::make_pair(c.x3, c.y3)); // This position will be occupied later
+			// (c.x3, c.y3) will be occupied later, so do not remove it here
 
 			auto iter = result[id].back();
 
@@ -313,13 +307,7 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 				iter.g,
 				iter.b
 			);
-			//result[id].push_back(s);
 
-		//	posMap[std::make_pair(c.x3, c.y3)] = count++;
-		/*	if (!putDroplet(c.x3, c.y3, count++)) {
-				errors.push_back(errorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): dynamic distance constraint failed.").arg(c.t - 1).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2)));
-				break;
-			}*/
 			posMap[std::make_pair(c.x3, c.y3)] = count++; // Do not use putDroplet here
 
 			result.push_back(droplet({iter, s}));
@@ -332,7 +320,7 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errors.push_back(errorLog(c.t, QString("Cannot split on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot split on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -351,11 +339,8 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 
 			result[id].push_back(iter);
 
-		//	posMap[std::make_pair(c.x1, c.y1)] = id;
-		//	posMap[std::make_pair(c.x2, c.y2)] = id;
-		//	posMap[std::make_pair(c.x3, c.y3)] = id;
 			if (!putDroplet(c.x1, c.y1, id) || !putDroplet(c.x2, c.y2, id) || !putDroplet(c.x3, c.y3, id)) {
-				errors.push_back(errorLog(c.t, QString("Cannot split on time %1, at (%2, %3): dynamic distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				error = errorLog(c.t, QString("Cannot split on time %1, at (%2, %3): dynamic distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -399,9 +384,6 @@ void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &re
 			removeDroplet(c.x1, c.y1);
 			removeDroplet(c.x2, c.y2);
 			removeDroplet(c.x3, c.y3);
-
-			//posMap[std::make_pair(u.x, u.y)] = nid1;
-			//posMap[std::make_pair(v.x, v.y)] = nid2;
 
 			assert(putDroplet(u.x, u.y, nid1) && putDroplet(v.x, v.y, nid2));
 

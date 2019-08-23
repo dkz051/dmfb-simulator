@@ -15,5 +15,6 @@ void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g);
 void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g);
 void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g);
 void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *g);
+void renderContaminants(const chipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g);
 
 #endif // UI_H

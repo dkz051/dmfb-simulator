@@ -53,11 +53,9 @@ typedef QVector<dropletStatus> droplet;
 
 typedef QMap<qreal, qint32> soundList;
 
-typedef QVector<errorLog> errorList;
-
 dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x, qreal &y);
 
-void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorList &errors);
+void loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorLog &error);
 
 void moveToPort(qint32 &x, qint32 &y, const chipConfig &config);
 

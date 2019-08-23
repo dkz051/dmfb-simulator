@@ -234,3 +234,5 @@ void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *
 
 	g->restore();
 }
+
+void renderContaminants(const chipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g) {}

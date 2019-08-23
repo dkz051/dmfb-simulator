@@ -17,4 +17,10 @@ struct chipConfig {
 	void init(qint32 rows = -1, qint32 columns = -1);
 };
 
+struct contaminant {
+	qint32 id, x, y;
+};
+
+typedef QVector<contaminant> contaminantList;
+
 #endif // CHIPCONFIG_H
