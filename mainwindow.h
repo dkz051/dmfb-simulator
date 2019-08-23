@@ -65,7 +65,7 @@ private:
 	bool dataLoaded;
 	chipConfig config;
 
-	QSound sndMove, sndMerge, sndSplitting, sndSplit;
+	QSound sndMove, sndMerge, sndSplitting, sndSplit, sndError;
 	soundList sounds;
 	errorList errors;
 };

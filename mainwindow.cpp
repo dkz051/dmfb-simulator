@@ -22,7 +22,7 @@
 
 static const qreal acceleration = 1.0;
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav") {
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav") {
 	ui->setupUi(this);
 	timer.setInterval(25);
 	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
@@ -32,6 +32,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	sndMerge.setLoops(1);
 	sndSplit.setLoops(1);
 	sndSplitting.setLoops(1);
+	sndError.setLoops(1);
 }
 
 MainWindow::~MainWindow() {
@@ -45,18 +46,27 @@ void MainWindow::on_actionNewChip_triggered() {
 }
 
 void MainWindow::onDlgNewChipAccepted(qint32 rows, qint32 columns) {
+	ui->actionLoadCommandFile->setEnabled(false);
+	ui->actionStart->setEnabled(false);
+	ui->actionPause->setEnabled(false);
+	ui->actionStep->setEnabled(false);
+	ui->actionRevert->setEnabled(false);
+	ui->actionReset->setEnabled(false);
+
+	dataLoaded = false;
+
 	frmConfigChip *wndConfigChip = new frmConfigChip(this);
 	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(onDlgConfigChipAccepted(const chipConfig &)));
 	wndConfigChip->setDimensions(rows, columns);
 	wndConfigChip->show();
-
-	dataLoaded = false;
 }
 
 void MainWindow::onDlgConfigChipAccepted(const chipConfig &config) {
 	displayTime = 0;
 	this->config = config;
 	ui->actionLoadCommandFile->setEnabled(true);
+
+	selectFile();
 }
 
 void MainWindow::on_actionExit_triggered() {
@@ -99,10 +109,8 @@ void MainWindow::dropEvent(QDropEvent *e) {
 }
 
 void MainWindow::loadFile(const QString &url) {
-	if (!::loadFile(url, config, droplets, minTime, maxTime, sounds, errors)) {
-		QMessageBox::warning(this, tr("Error"), tr("Cannot load the file specified."));
-		return;
-	}
+	::loadFile(url, config, droplets, minTime, maxTime, sounds, errors);
+	maxTime = (maxTime / 1000) * 1000; // Truncate to seconds (in case any command failed)
 
 	ui->actionStart->setEnabled(true);
 	ui->actionStep->setEnabled(true);
@@ -136,6 +144,7 @@ void MainWindow::onTimeout() {
 
 	if (kter != lter) {
 		on_actionPause_triggered();
+		sndError.play();
 		QMessageBox::warning(this, tr("Error"), kter->msg);
 	}
 

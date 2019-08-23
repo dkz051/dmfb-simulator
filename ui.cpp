@@ -48,7 +48,7 @@ void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *
 	g->setPen(Qt::PenStyle::NoPen);
 
 	g->setBrush(QColor(192, 192, 192, 255));
-	g->drawRect(QRectF(grid, grid, (R - 2) * grid, (C - 2) * grid));
+	g->drawRect(QRectF(grid, grid, (C - 2) * grid, (R - 2) * grid));
 
 	g->restore();
 }
@@ -187,8 +187,7 @@ void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, 
 void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
-	qint32 R = config.rows, C = config.columns;
-	qreal size = getGridSize(W, H, R, C) * 0.75;
+	qreal size = getGridSize(W, H, 8, 8) * 0.75;
 
 	QFont font;
 	font.setPointSizeF(std::max(size, 4.0));
