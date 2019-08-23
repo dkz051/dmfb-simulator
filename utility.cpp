@@ -7,7 +7,13 @@
 // Enumerations & constants
 
 const qreal eps = 1e-8;
+const qreal inf = 1e100;
+
 const qreal radius = 0.4;
+const qreal rContaminant = 0.2;
+const qint32 contaminationDots = 1;
+
+const qreal acceleration = 1.0;
 
 const qreal soundOffset = 0.3;
 const qreal mergingTimeInterval = 1.6;
@@ -17,7 +23,6 @@ const qint32 sndFxMove = 1;
 const qint32 sndFxMerge = 2;
 const qint32 sndFxSplitting = 4;
 const qint32 sndFxSplit = 8;
-const qreal inf = 1e100;
 
 void ChipConfig::init(qint32 rows, qint32 columns) {
 	if (rows < 3 || rows > 12 || columns < 3 || columns > 12 || (rows == 3 && columns == 3)) {
@@ -39,7 +44,7 @@ void ChipConfig::init(qint32 rows, qint32 columns) {
 	B.resize(columns);
 }
 
-Contaminant::Contaminant(qint32 id, qint32 x, qint32 y) : id(id), x(x), y(y) {}
+Contaminant::Contaminant(qint32 time, qint32 id, qint32 x, qint32 y) : time(time), id(id), x(x), y(y) {}
 
 DropletStatus::DropletStatus() {}
 
@@ -70,7 +75,7 @@ DropletStatus interpolation(DropletStatus a, DropletStatus b, qreal t, qreal &x,
 	return ans;
 }
 
-void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, ErrorLog &error) {
+void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &droplets, qint64 &minTime, qint64 &maxTime, SoundList &sounds, ErrorLog &error, ContaminantList &contaminants) {
 	QFile file(url);
 	file.open(QFile::ReadOnly | QFile::Text);
 	QTextStream fs(&file);
@@ -193,8 +198,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 
 	std::sort(commandList.begin(), commandList.end(), [](Command a, Command b) -> bool { return a.t < b.t; });
 
-	result.clear();
+	droplets.clear();
 	sounds.clear();
+	contaminants.clear();
 
 	QVector<std::pair<qint32, qint32>> removeList;
 	for (qint32 i = 0; i < commandList.size(); ++i) {
@@ -206,7 +212,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				error = ErrorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
-			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randint(0, 255), randint(0, 255), randint(0, 255));
+			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randInt(0, 255), randInt(0, 255), randInt(0, 255));
 
 			moveToPort(c.x1, c.y1, config);
 			DropletStatus mnt0(c.t - 1, c.x1, c.y1, 0, 0, 0, mnt.r, mnt.g, mnt.b);
@@ -216,15 +222,16 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				break;
 			}
 
-			result.push_back(droplet({mnt0, mnt}));
+			droplets.push_back(Droplet({mnt0, mnt}));
 
 			minTime = std::min(minTime, qint64(mnt0.t * 1000));
+			contaminants.push_back(Contaminant(c.t, count - 1, mnt.x, mnt.y));
 		} else if (c.type == CommandType::Output) {
 			maxTime = std::max(maxTime, qint64((c.t + 1) * 1000));
 
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
-			if (id < 0 || id >= result.size()) {
+			if (id < 0 || id >= droplets.size()) {
 				error = ErrorLog(c.t, QString("Cannot output a droplet on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
@@ -234,7 +241,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				break;
 			}
 
-			auto iter = result[id].back();
+			auto iter = droplets[id].back();
 
 			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, iter.r, iter.g, iter.b);
 
@@ -242,25 +249,25 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 
 			DropletStatus mnt1(c.t + 1, c.x1, c.y1, 0, 0, 0, iter.r, iter.g, iter.b);
 
-			result[id].push_back(mnt);
-			result[id].push_back(mnt1);
+			droplets[id].push_back(mnt);
+			droplets[id].push_back(mnt1);
 			removeList.push_back(std::make_pair(mnt.x, mnt.y));
 		} else if (c.type == CommandType::Move || c.type == CommandType::Mix) {
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
-			if (id < 0 || id >= result.size()) {
+			if (id < 0 || id >= droplets.size()) {
 				error = ErrorLog(c.t, QString("Cannot %1 on time %2, at (%3, %4): no droplet here.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
-			auto iter = result[id].back();
+			auto iter = droplets[id].back();
 
 			DropletStatus mnt1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.r, iter.g, iter.b),
 				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.r, iter.g, iter.b);
 
-			result[id].push_back(mnt1);
+			droplets[id].push_back(mnt1);
 			removeList.push_back(std::make_pair(mnt1.x, mnt1.y));
 
 			if (!putDroplet(mnt2.x, mnt2.y, id)) {
@@ -268,18 +275,20 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				break;
 			}
 
-			result[id].push_back(mnt2);
+			droplets[id].push_back(mnt2);
 
 			maxTime = std::max(maxTime, qint64(mnt2.t * 1000));
 
 			sounds[mnt2.t - soundOffset] |= sndFxMove;
+
+			contaminants.push_back(Contaminant(c.t + 1, id, mnt2.x, mnt2.y));
 		} else if (c.type == CommandType::Merging) {
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 
 			qint32 id1 = findIdFromPosition(c.x1, c.y1);
 			qint32 id2 = findIdFromPosition(c.x2, c.y2);
 
-			if (id1 < 0 || id1 >= result.size() || id2 < 0 || id2 >= result.size()) {
+			if (id1 < 0 || id1 >= droplets.size() || id2 < 0 || id2 >= droplets.size()) {
 				error = ErrorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
 				break;
 			}
@@ -288,13 +297,13 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 			posMap.remove(std::make_pair(c.x2, c.y2));
 			// Note that here we cannot use the remove-list
 
-			auto iter = result[id1].back();
-			auto jter = result[id2].back();
+			auto iter = droplets[id1].back();
+			auto jter = droplets[id2].back();
 			DropletStatus s1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.r, iter.g, iter.b);
 			DropletStatus s2(c.t, c.x2, c.y2, radius, radius, jter.a, jter.r, jter.g, jter.b);
 
-			result[id1].push_back(s1);
-			result[id2].push_back(s2);
+			droplets[id1].push_back(s1);
+			droplets[id2].push_back(s2);
 
 			DropletStatus s(
 				c.t + mergingTimeInterval,
@@ -308,8 +317,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				(s1.b + s2.b) / 2
 			);
 
-			result[id1].push_back(s);
-			result[id2].push_back(s);
+			droplets[id1].push_back(s);
+			droplets[id2].push_back(s);
 
 			posMap[std::make_pair(s1.x, s1.y)] = id2;
 			posMap[std::make_pair(s2.x, s2.y)] = id2;
@@ -323,13 +332,13 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 
 			qint32 id = findIdFromPosition(c.x3, c.y3);
 
-			assert(id >= 0 && id < result.size());
+			assert(id >= 0 && id < droplets.size());
 
 			removeList.push_back(std::make_pair(c.x1, c.y1));
 			removeList.push_back(std::make_pair(c.x2, c.y2));
 			// (c.x3, c.y3) will be occupied later, so do not remove it here
 
-			auto iter = result[id].back();
+			auto iter = droplets[id].back();
 
 			DropletStatus s(
 				c.t + 1,
@@ -345,21 +354,22 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 
 			posMap[std::make_pair(c.x3, c.y3)] = count++; // Do not use putDroplet here
 
-			result.push_back(droplet({iter, s}));
+			droplets.push_back(Droplet({iter, s}));
 
 			maxTime = std::max(maxTime, qint64(s.t * 1000));
 
 			sounds[s.t - soundOffset] |= sndFxMerge;
+			contaminants.push_back(Contaminant(c.t, count - 1, c.x3, c.y3));
 		} else if (c.type == CommandType::Splitting) {
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
-			if (id < 0 || id >= result.size()) {
+			if (id < 0 || id >= droplets.size()) {
 				error = ErrorLog(c.t, QString("Cannot split on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
-			auto iter = result[id].back();
+			auto iter = droplets[id].back();
 			DropletStatus s(
 				c.t + splitStretchInterval,
 				c.x1,
@@ -372,23 +382,23 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				iter.b
 			); // s: before split
 
-			result[id].push_back(iter);
+			droplets[id].push_back(iter);
 
 			if (!putDroplet(c.x1, c.y1, id) || !putDroplet(c.x2, c.y2, id) || !putDroplet(c.x3, c.y3, id)) {
 				error = ErrorLog(c.t, QString("Cannot split on time %1, at (%2, %3): dynamic distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
-			result[id].push_back(s);
+			droplets[id].push_back(s);
 
 			maxTime = std::max(maxTime, qint64(s.t * 1000));
 			sounds[s.t - soundOffset] |= sndFxSplitting;
 		} else if (c.type == CommandType::Split) {
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
-			assert(id >= 0 && id < result.size());
+			assert(id >= 0 && id < droplets.size());
 
-			auto iter = result[id].back();
+			auto iter = droplets[id].back();
 			DropletStatus u(
 				c.t + 1,
 				c.x2,
@@ -396,9 +406,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 				radius,
 				radius,
 				iter.a,
-				iter.r <= 127 ? randint(0, 2 * iter.r) : randint(2 * iter.r - 255, 255),
-				iter.g <= 127 ? randint(0, 2 * iter.g) : randint(2 * iter.g - 255, 255),
-				iter.b <= 127 ? randint(0, 2 * iter.b) : randint(2 * iter.b - 255, 255)
+				iter.r <= 127 ? randInt(0, 2 * iter.r) : randInt(2 * iter.r - 255, 255),
+				iter.g <= 127 ? randInt(0, 2 * iter.g) : randInt(2 * iter.g - 255, 255),
+				iter.b <= 127 ? randInt(0, 2 * iter.b) : randInt(2 * iter.b - 255, 255)
 			), v(
 				c.t + 1,
 				c.x3,
@@ -413,8 +423,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 
 			qint32 nid1 = count++, nid2 = count++;
 
-			result.push_back(droplet({iter, u}));
-			result.push_back(droplet({iter, v}));
+			droplets.push_back(Droplet({iter, u}));
+			droplets.push_back(Droplet({iter, v}));
 
 			removeDroplet(c.x1, c.y1);
 			removeDroplet(c.x2, c.y2);
@@ -425,6 +435,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 			maxTime = std::max(maxTime, qint64(u.t * 1000));
 
 			sounds[u.t - soundOffset] |= sndFxSplit;
+			contaminants.push_back(Contaminant(c.t + 1, nid1, c.x2, c.y2));
+			contaminants.push_back(Contaminant(c.t + 1, nid2, c.x3, c.y3));
 		}
 
 		if (i + 1 == commandList.size() || commandList[i + 1].t != commandList[i].t) {
@@ -438,13 +450,15 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<droplet> &re
 	sounds[inf] = sndFxMove;
 
 	qint32 timeMaximum = commandList.back().t + 1;
-	for (qint32 i = 0; i < result.size(); ++i) {
-		DropletStatus last = result[i].back();
+	for (qint32 i = 0; i < droplets.size(); ++i) {
+		DropletStatus last = droplets[i].back();
 		if (fabs(last.rx - radius) < eps && fabs(last.ry - radius) < eps) {
 			last.t = timeMaximum;
-			result[i].push_back(last); // Push a final state so that status is keeped when error occurs
+			droplets[i].push_back(last); // Push a final state so that status is keeped when error occurs
 		}
 	}
+
+	std::sort(contaminants.begin(), contaminants.end(), [](Contaminant a, Contaminant b) -> bool { return a.time < b.time; });
 }
 
 void moveToPort(qint32 &x, qint32 &y, const ChipConfig &config) {
@@ -475,7 +489,7 @@ bool isPortType(qint32 x, qint32  y, const ChipConfig &config, PortType T) {
 	return false;
 }
 
-bool getRealTimeStatus(const droplet &d, qreal t, DropletStatus &ans, qreal &x, qreal &y) {
+bool getRealTimeStatus(const Droplet &d, qreal t, DropletStatus &ans, qreal &x, qreal &y) {
 	DropletStatus mntTmp;
 	mntTmp.t = t;
 
@@ -495,6 +509,10 @@ qreal easing(qreal t) {
 	}
 }
 
-qint32 randint(qint32 L, qint32 R) {
-	return qint32(rand() / double(RAND_MAX) * (R - L)) + L;
+qint32 randInt(qint32 L, qint32 R) {
+	return qint32(rand() / qreal(RAND_MAX) * (R - L)) + L;
+}
+
+qreal randReal(qreal L, qreal R) {
+	return rand() / qreal(RAND_MAX) * (R - L) + L;
 }

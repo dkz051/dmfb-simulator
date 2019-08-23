@@ -156,7 +156,7 @@ void renderPortType(const ChipConfig &config, qreal W, qreal H, QPainter *g) {
 	g->restore();
 }
 
-void renderDroplets(const ChipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g) {
+void renderDroplets(const ChipConfig &config, const QVector<Droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g) {
 	if (!config.valid) return;
 
 	qint32 R = config.rows, C = config.columns;
@@ -235,4 +235,27 @@ void renderGridAxisNumber(const ChipConfig &config, qreal W, qreal H, QPainter *
 	g->restore();
 }
 
-void renderContaminants(const ChipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g) {}
+void renderContaminants(const ChipConfig &config, qreal W, qreal H, const QVector<Droplet> &droplets, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g) {
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setPen(Qt::black);
+	for (qint32 x = 0; x < C; ++x) {
+		for (qint32 y = 0; y < R; ++y) {
+			for (auto s: contaminants[x][y]) {
+				auto it = droplets[s].first();
+				g->setBrush(QColor(it.r, it.g, it.b, 0xff));
+				for (qint32 cnt = 1; cnt <= contaminationDots; ++cnt) {
+					g->drawEllipse(QPointF((x + randReal(rContaminant, 1.0 - rContaminant)) * grid, (y + randReal(rContaminant, 1.0 - rContaminant)) * grid), rContaminant * grid, rContaminant * grid);
+				}
+			}
+		}
+	}
+
+	g->restore();
+}

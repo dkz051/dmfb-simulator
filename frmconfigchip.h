@@ -25,7 +25,7 @@ protected:
 	bool eventFilter(QObject *o, QEvent *e);
 
 signals:
-	void accepted(const chipConfig &config);
+	void accepted(const ChipConfig &config);
 
 private slots:
 	void on_buttonBox_accepted();
@@ -34,7 +34,7 @@ private:
 	Ui::frmConfigChip *ui;
 
 	QTimer *timer;
-	chipConfig config;
+	ChipConfig config;
 };
 
 #endif // FRMCONFIGCHIP_H

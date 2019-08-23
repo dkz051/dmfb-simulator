@@ -20,8 +20,6 @@
 #include "ui.h"
 #include "utility.h"
 
-static const qreal acceleration = 1.0;
-
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav"), error(-2, "") {
 	ui->setupUi(this);
 	timer.setInterval(25);
@@ -56,12 +54,12 @@ void MainWindow::onDlgNewChipAccepted(qint32 rows, qint32 columns) {
 	dataLoaded = false;
 
 	frmConfigChip *wndConfigChip = new frmConfigChip(this);
-	connect(wndConfigChip, SIGNAL(accepted(const chipConfig &)), this, SLOT(onDlgConfigChipAccepted(const chipConfig &)));
+	connect(wndConfigChip, SIGNAL(accepted(const ChipConfig &)), this, SLOT(onDlgConfigChipAccepted(const ChipConfig &)));
 	wndConfigChip->setDimensions(rows, columns);
 	wndConfigChip->show();
 }
 
-void MainWindow::onDlgConfigChipAccepted(const chipConfig &config) {
+void MainWindow::onDlgConfigChipAccepted(const ChipConfig &config) {
 	displayTime = 0;
 	this->config = config;
 	ui->actionLoadCommandFile->setEnabled(true);
@@ -109,7 +107,15 @@ void MainWindow::dropEvent(QDropEvent *e) {
 }
 
 void MainWindow::loadFile(const QString &url) {
-	::loadFile(url, config, droplets, minTime, maxTime, sounds, error);
+	::loadFile(url, config, droplets, minTime, maxTime, sounds, error, contaminants);
+
+	contamination.clear();
+	contamination.resize(config.columns);
+
+	for (qint32 i = 0; i < config.columns; ++i) {
+		contamination[i].resize(config.rows);
+	}
+
 	maxTime = (maxTime / 1000) * 1000; // Truncate to seconds (in case any command failed)
 
 	ui->actionStart->setEnabled(true);
@@ -137,6 +143,13 @@ void MainWindow::onTimeout() {
 
 	if (iter != jter) {
 		playSound(iter.value());
+	}
+
+	auto kter = std::lower_bound(contaminants.begin(), contaminants.end(), lastDisplay / 1000.0, [](Contaminant a, qreal t) -> bool { return a.time < t; });
+	auto lter = std::lower_bound(contaminants.begin(), contaminants.end(), displayTime / 1000.0, [](Contaminant a, qreal t) -> bool { return a.time < t; });
+
+	for (auto it = kter; it != lter; ++it) {
+		contamination[it->x][it->y].insert(it->id);
 	}
 
 	if (displayTime > maxTime) {
@@ -216,6 +229,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			renderGridAxisNumber(config, W, H, &painter);
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
+				renderContaminants(config, W, H, droplets, contamination, &painter);
 				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
 			}
 			renderGrid(config, W, H, &painter);

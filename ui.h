@@ -7,13 +7,13 @@
 
 qreal getGridSize(qreal width, qreal height, qint32 rows, qint32 columns);
 
-void renderGrid(const chipConfig &config, qreal W, qreal H, QPainter *g);
-void renderPortConfigGrid(const chipConfig &config, qreal W, qreal H, QPainter *g);
-void renderPortConfigMask(const chipConfig &config, qreal W, qreal H, QPainter *g);
-void renderPortType(const chipConfig &config, qreal W, qreal H, QPainter *g);
-void renderDroplets(const chipConfig &config, const QVector<droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g);
-void renderTime(const chipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g);
-void renderGridAxisNumber(const chipConfig &config, qreal W, qreal H, QPainter *g);
-void renderContaminants(const chipConfig &config, qreal W, qreal H, const contaminantList &contaminants, QPainter *g);
+void renderGrid(const ChipConfig &config, qreal W, qreal H, QPainter *g);
+void renderPortConfigGrid(const ChipConfig &config, qreal W, qreal H, QPainter *g);
+void renderPortConfigMask(const ChipConfig &config, qreal W, qreal H, QPainter *g);
+void renderPortType(const ChipConfig &config, qreal W, qreal H, QPainter *g);
+void renderDroplets(const ChipConfig &config, const QVector<Droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g);
+void renderTime(const ChipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g);
+void renderGridAxisNumber(const ChipConfig &config, qreal W, qreal H, QPainter *g);
+void renderContaminants(const ChipConfig &config, qreal W, qreal H, const QVector<Droplet> &droplets, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
 
 #endif // UI_H

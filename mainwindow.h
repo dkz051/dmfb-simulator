@@ -1,11 +1,12 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QSet>
 #include <QUrl>
+#include <QSound>
 #include <QTimer>
 #include <QDateTime>
 #include <QMainWindow>
-#include <QSound>
 
 #include "utility.h"
 
@@ -30,7 +31,7 @@ private slots:
 	void on_actionNewChip_triggered();
 
 	void onDlgNewChipAccepted(qint32 rows, qint32 columns);
-	void onDlgConfigChipAccepted(const chipConfig &config);
+	void onDlgConfigChipAccepted(const ChipConfig &config);
 
 	void on_actionExit_triggered();
 
@@ -60,13 +61,16 @@ private:
 	qint64 lastTime, displayTime;
 
 	qint64 minTime, maxTime;
-	QVector<droplet> droplets;
+	QVector<Droplet> droplets;
 	bool dataLoaded;
-	chipConfig config;
+	ChipConfig config;
 
 	QSound sndMove, sndMerge, sndSplitting, sndSplit, sndError;
-	soundList sounds;
-	errorLog error;
+	SoundList sounds;
+	ErrorLog error;
+	ContaminantList contaminants;
+
+	QVector<QVector<QSet<qint32>>> contamination;
 };
 
 #endif // MAINWINDOW_H
