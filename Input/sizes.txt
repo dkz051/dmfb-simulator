@@ -17,6 +17,11 @@ rows=8 columns>=8
 input=(1,8) (4,8)
 output=(8,1)
 
+testcaseerror.txt:
+rows=8 columns=8
+input=(1,4) (4,8)
+output=(8,3)
+
 kase-moveonly.txt:
 rows=6 columns>=6
 input=(2,6) output=(6,1)

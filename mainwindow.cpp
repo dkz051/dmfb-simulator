@@ -104,10 +104,8 @@ void MainWindow::dropEvent(QDropEvent *e) {
 }
 
 void MainWindow::loadFile(const QString &url) {
-	QString errorMsg;
-
-	if (!::loadFile(url, config, errorMsg, droplets, minTime, maxTime, sounds)) {
-		QMessageBox::warning(this, tr("Error loading command file"), errorMsg);
+	if (!::loadFile(url, config, droplets, minTime, maxTime, sounds, errors)) {
+		QMessageBox::warning(this, tr("Error"), tr("Cannot load the file specified."));
 		return;
 	}
 
@@ -135,7 +133,7 @@ void MainWindow::onTimeout() {
 	auto jter = sounds.lowerBound(displayTime / 1000.0);
 
 	if (iter != jter) {
-		qint32 sndFx = jter.value();
+		qint32 sndFx = iter.value();
 		if (sndFx & sndFxMove) {
 			sndMove.stop();
 			sndMove.play();
@@ -154,14 +152,20 @@ void MainWindow::onTimeout() {
 		}
 	}
 
+	//auto kter = errors.lowerBound(lastDisplay / 1000.0);
+	//auto lter = errors.lowerBound(displayTime / 1000.0);
+
+	auto kter = std::lower_bound(errors.begin(), errors.end(), lastDisplay / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
+	auto lter = std::lower_bound(errors.begin(), errors.end(), displayTime / 1000.0, [](errorLog e, qreal t) -> bool { return e.t < t; });
+
+	if (kter != lter) {
+		on_actionPause_triggered();
+		QMessageBox::warning(this, tr("Error"), kter->msg);
+	}
+
 	if (displayTime > maxTime) {
 		displayTime = maxTime;
-		timer.stop();
-		ui->actionStart->setEnabled(true);
-		ui->actionPause->setEnabled(false);
-		ui->actionStep->setEnabled(true);
-		ui->actionRevert->setEnabled(true);
-		ui->actionReset->setEnabled(true);
+		on_actionPause_triggered();
 	}
 
 	render();

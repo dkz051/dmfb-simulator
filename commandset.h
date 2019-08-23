@@ -43,13 +43,21 @@ struct command {
 	command(commandType type, qint32 t, qint32 x1, qint32 y1, qint32 x2 = -1, qint32 y2 = -1, qint32 x3 = -1, qint32 y3 = -1);
 };
 
+struct errorLog {
+	qint32 t;
+	QString msg;
+	errorLog(qint32 t, QString msg);
+};
+
 typedef QVector<dropletStatus> droplet;
 
 typedef QMap<qreal, qint32> soundList;
 
+typedef QVector<errorLog> errorList;
+
 dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x, qreal &y);
 
-bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds);
+bool loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorList &errors);
 
 void moveToPort(qint32 &x, qint32 &y, const chipConfig &config);
 

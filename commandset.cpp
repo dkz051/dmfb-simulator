@@ -8,6 +8,8 @@ static const qreal inf = 1e100;
 
 command::command(commandType type, qint32 t, qint32 x1, qint32 y1, qint32 x2, qint32 y2, qint32 x3, qint32 y3) : type(type), t(t), x1(x1), y1(y1), x2(x2), y2(y2), x3(x3), y3(y3) {}
 
+errorLog::errorLog(qint32 t, QString msg) : t(t), msg(msg) {}
+
 dropletStatus::dropletStatus() {}
 
 dropletStatus::dropletStatus(qreal t, qint32 x, qint32 y, qreal rx, qreal ry, qint32 a, qint32 r, qint32 g, qint32 b) : t(t), x(x), y(y), rx(rx), ry(ry), a(a), r(r), g(g), b(b) {}
@@ -33,7 +35,7 @@ dropletStatus interpolation(dropletStatus a, dropletStatus b, qreal t, qreal &x,
 	return ans;
 }
 
-bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds) {
+bool loadFile(const QString &url, const chipConfig &config, QVector<droplet> &result, qint64 &minTime, qint64 &maxTime, soundList &sounds, errorList &errors) {
 	QFile file(url);
 	file.open(QFile::ReadOnly | QFile::Text);
 	QTextStream fs(&file);
@@ -137,13 +139,14 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 
 	result.clear();
 	sounds.clear();
+	errors.clear();
 
 	for (qint32 i = 0; i < commandList.size(); ++i) {
 		command &c = commandList[i];
 		if (c.type == commandType::Input) {
 			if (!isPortType(c.x1, c.y1, config, portType::input)) {
-				errorMsg = QString("Cannot place the droplet at time %1: position specified is not beside an input port.").arg(c.t);
-				return false;
+				errors.push_back(errorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				continue;
 			}
 			dropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randint(0, 255), randint(0, 255), randint(0, 255));
 
@@ -157,16 +160,16 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			maxTime = std::max(maxTime, qint64(mnt.t * 1000));
 			minTime = std::min(minTime, qint64(mnt0.t * 1000));
 		} else if (c.type == commandType::Output) {
-			if (!isPortType(c.x1, c.y1, config, portType::output)) {
-				errorMsg = QString("Cannot output the droplet at time %1: position specified is not beside an output port.").arg(c.t);
-				return false;
-			}
-
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errorMsg = QString("Cannot output at time %1: no droplet exists at the position specified.").arg(c.t).arg(c.x1).arg(c.y1);
-				return false;
+				errors.push_back(errorLog(c.t, QString("Cannot output a droplet on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				continue;
+			}
+
+			if (!isPortType(c.x1, c.y1, config, portType::output)) {
+				errors.push_back(errorLog(c.t, QString("Cannot output the droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				continue;
 			}
 
 			auto iter = result[id].back();
@@ -186,14 +189,14 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errorMsg = QString("Cannot %1 a droplet at time %2: no droplet exists at the position specified.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t);
-				return false;
+				errors.push_back(errorLog(c.t, QString("Cannot %1 on time %2, at (%3, %4): no droplet here.").arg(c.type == commandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				continue;
 			}
 
 			auto iter = result[id].back();
 
 			dropletStatus mnt1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.r, iter.g, iter.b),
-					mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.r, iter.g, iter.b);
+				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.r, iter.g, iter.b);
 
 			result[id].push_back(mnt1);
 			result[id].push_back(mnt2);
@@ -208,8 +211,8 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			qint32 id2 = findIdFromPosition(c.x2, c.y2);
 
 			if (id1 < 0 || id1 >= result.size() || id2 < 0 || id2 >= result.size()) {
-				errorMsg = QString("Cannot merge at time %1: no drop exists at the position specified.").arg(c.t);
-				return false;
+				errors.push_back(errorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2)));
+				continue;
 			}
 
 			posMap.remove(std::make_pair(c.x1, c.y1));
@@ -278,8 +281,8 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= result.size()) {
-				errorMsg = QString("Cannot split at time %1: no droplet exists at the position specified.").arg(c.t);
-				return false;
+				errors.push_back(errorLog(c.t, QString("Cannot split on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1)));
+				continue;
 			}
 
 			auto iter = result[id].back();
@@ -309,19 +312,6 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 			assert(id >= 0 && id < result.size());
 
 			auto iter = result[id].back();
-
-/*			dropletStatus u, v;
-
-			u.a = s.a;
-			u.r = randint(s.r <= 127 ? 0 : 2 * s.r - 255, s.r >= 128 ? 255: 2 * s.r);
-			u.g = randint(s.g <= 127 ? 0 : 2 * s.g - 255, s.g >= 128 ? 255: 2 * s.g);
-			u.b = randint(s.b <= 127 ? 0 : 2 * s.b - 255, s.b >= 128 ? 255: 2 * s.b);
-
-			u.t = s.t + 2.0;
-			u.x = tk[4].toInt() - 1;
-			u.y = config.rows - tk[5].toInt();
-			u.rx = u.ry = 0.4;
-*/
 			dropletStatus u(
 				c.t + 1,
 				c.x2,
@@ -344,32 +334,7 @@ bool loadFile(const QString &url, const chipConfig &config, QString &errorMsg, Q
 				2 * iter.b - u.b
 			);
 
-/*			v = u;
-			v.x = tk[6].toInt() - 1;
-			v.y = config.rows - tk[7].toInt();
-
-			v.r = s.r * 2 - u.r;
-			v.g = s.g * 2 - u.g;
-			v.b = s.b * 2 - u.b;
-
-			if (u.x == v.x) {
-				s.ry = 3.0 * radius;
-			} else {
-				s.rx = 3.0 * radius;
-			}
-
-			s.t += 0.8;
-			result[id].push_back(s);*/
-
 			qint32 nid1 = count++, nid2 = count++;
-			/*droplet nd1, nd2;
-			nd1.push_back(s);
-			nd1.push_back(u);
-			nd2.push_back(s);
-			nd2.push_back(v);
-
-			result.push_back(nd1);
-			result.push_back(nd2);*/
 
 			result.push_back(droplet({iter, u}));
 			result.push_back(droplet({iter, v}));

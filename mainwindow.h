@@ -66,6 +66,7 @@ private:
 
 	QSoundEffect sndMove, sndMerge, sndSplitting, sndSplit;
 	soundList sounds;
+	errorList errors;
 };
 
 #endif // MAINWINDOW_H
