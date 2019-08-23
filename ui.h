@@ -14,7 +14,7 @@ void renderPortType(const ChipConfig &config, qreal W, qreal H, QPainter *g);
 void renderDroplets(const ChipConfig &config, const QVector<Droplet> &droplets, qreal time, qreal W, qreal H, QPainter *g);
 void renderTime(const ChipConfig &config, qreal time, qreal maxTime, qreal W, qreal H, QPainter *g);
 void renderGridAxisNumber(const ChipConfig &config, qreal W, qreal H, QPainter *g);
-void renderContaminants(const ChipConfig &config, qreal W, qreal H, const QVector<Droplet> &droplets, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
+void renderContaminants(const ChipConfig &config, qreal W, qreal H, quint32 randSeed, const QVector<Droplet> &droplets, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
 void renderContaminantCount(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
 
 #endif // UI_H

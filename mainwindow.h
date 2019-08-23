@@ -71,6 +71,7 @@ private:
 	ContaminantList contaminants;
 
 	QVector<QVector<QSet<qint32>>> contamination;
+	quint32 randSeed;
 };
 
 #endif // MAINWINDOW_H

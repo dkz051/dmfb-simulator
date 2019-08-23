@@ -11,8 +11,8 @@ const qreal eps = 1e-8;
 const qreal inf = 1e100;
 
 const qreal radius = 0.4;
-const qreal rContaminant = 0.25;
-const qint32 contaminationDots = 1;
+const qreal rContaminant = 0.1;
+const qint32 contaminationDots = 5;
 
 const qreal acceleration = 1.0;
 
@@ -512,7 +512,6 @@ qreal easing(qreal t) {
 
 qint32 randInt(qint32 L, qint32 R) {
 	qint32 ans = qint32(rand() / qreal(RAND_MAX) * (R - L)) + L;
-	qDebug() << QString("randInt(%1, %2) = %3").arg(L).arg(R).arg(ans);
 	return ans;
 }
 

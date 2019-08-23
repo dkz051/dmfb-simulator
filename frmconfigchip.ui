@@ -9,14 +9,14 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>617</width>
-    <height>400</height>
+    <width>640</width>
+    <height>480</height>
    </rect>
   </property>
   <property name="minimumSize">
    <size>
-    <width>480</width>
-    <height>360</height>
+    <width>640</width>
+    <height>480</height>
    </size>
   </property>
   <property name="font">
@@ -106,13 +106,13 @@
       <item>
        <widget class="QLabel" name="lblHints">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+         <sizepolicy hsizetype="Ignored" vsizetype="Preferred">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint&lt;/span&gt;: &lt;span style=&quot; font-style:italic;&quot;&gt;Left-click&lt;/span&gt; on a port in the Preview panel to set or clear its type.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Note&lt;/span&gt;: Please specify &lt;span style=&quot; font-style:italic;&quot;&gt;at least&lt;/span&gt; one input port and &lt;span style=&quot; font-style:italic;&quot;&gt;exactly&lt;/span&gt; one output port. If &lt;span style=&quot; font-style:italic;&quot;&gt;any&lt;/span&gt; wash input port is specified, &lt;span style=&quot; font-style:italic;&quot;&gt;exactly&lt;/span&gt; one waste port is required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint&lt;/span&gt;: &lt;span style=&quot; font-style:italic;&quot;&gt;Choose&lt;/span&gt; a port type above, then &lt;span style=&quot; font-style:italic;&quot;&gt;click&lt;/span&gt; on a port in the Preview panel to set or clear its type.&lt;/p&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Note&lt;/span&gt;: Please specify &lt;span style=&quot; font-style:italic;&quot;&gt;at least&lt;/span&gt; one input port and &lt;span style=&quot; font-style:italic;&quot;&gt;exactly&lt;/span&gt; one output port. If &lt;span style=&quot; font-style:italic;&quot;&gt;any&lt;/span&gt; wash input port is specified, &lt;span style=&quot; font-style:italic;&quot;&gt;exactly&lt;/span&gt; one waste port is required.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
         </property>
         <property name="wordWrap">
          <bool>true</bool>
@@ -124,6 +124,9 @@
         <property name="orientation">
          <enum>Qt::Vertical</enum>
         </property>
+        <property name="sizeType">
+         <enum>QSizePolicy::Expanding</enum>
+        </property>
         <property name="sizeHint" stdset="0">
          <size>
           <width>20</width>
@@ -132,7 +135,7 @@
         </property>
        </spacer>
       </item>
-      <item alignment="Qt::AlignHCenter|Qt::AlignBottom">
+      <item alignment="Qt::AlignHCenter">
        <widget class="QDialogButtonBox" name="buttonBox">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -284,4 +287,21 @@
    </hints>
   </connection>
  </connections>
+ <designerdata>
+  <property name="gridDeltaX">
+   <number>10</number>
+  </property>
+  <property name="gridDeltaY">
+   <number>10</number>
+  </property>
+  <property name="gridSnapX">
+   <bool>true</bool>
+  </property>
+  <property name="gridSnapY">
+   <bool>true</bool>
+  </property>
+  <property name="gridVisible">
+   <bool>true</bool>
+  </property>
+ </designerdata>
 </ui>

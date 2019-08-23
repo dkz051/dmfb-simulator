@@ -109,6 +109,10 @@ void MainWindow::dropEvent(QDropEvent *e) {
 void MainWindow::loadFile(const QString &url) {
 	::loadFile(url, config, droplets, minTime, maxTime, sounds, error, contaminants);
 
+	srand(quint32(QDateTime::currentMSecsSinceEpoch()));
+
+	randSeed = quint32(rand());
+
 	contamination.clear();
 	contamination.resize(config.columns);
 
@@ -150,7 +154,6 @@ void MainWindow::onTimeout() {
 
 	for (auto it = kter; it != lter; ++it) {
 		contamination[it->x][it->y].insert(it->id);
-		qDebug() << QString("Grid (%1, %2) is contaminated by id %3").arg(it->x).arg(it->y).arg(it->id);
 	}
 
 	if (displayTime > maxTime) {
@@ -200,6 +203,13 @@ void MainWindow::on_actionPause_triggered() {
 void MainWindow::on_actionStep_triggered() {
 	displayTime = qint32(floor(displayTime / 1000.0) + 1.0) * 1000;
 	displayTime = std::min(displayTime, maxTime);
+
+	auto iter = std::lower_bound(contaminants.begin(), contaminants.end(), displayTime / 1000.0, [](Contaminant a, qreal t) -> bool { return a.time < t; });
+	auto jter = std::upper_bound(contaminants.begin(), contaminants.end(), displayTime / 1000.0, [](qreal t, Contaminant a) -> bool { return t < a.time; });
+
+	for (auto it = iter; it != jter; ++it) {
+		contamination[it->x][it->y].insert(it->id);
+	}
 	render();
 }
 
@@ -230,8 +240,8 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			renderGridAxisNumber(config, W, H, &painter);
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
-				if (timer.isActive()) {
-					renderContaminants(config, W, H, droplets, contamination, &painter);
+				if (timer.isActive() || displayTime != maxTime) {
+					renderContaminants(config, W, H, randSeed, droplets, contamination, &painter);
 				} else {
 					renderContaminantCount(config, W, H, contamination, &painter);
 				}
