@@ -150,6 +150,7 @@ void MainWindow::onTimeout() {
 
 	for (auto it = kter; it != lter; ++it) {
 		contamination[it->x][it->y].insert(it->id);
+		qDebug() << QString("Grid (%1, %2) is contaminated by id %3").arg(it->x).arg(it->y).arg(it->id);
 	}
 
 	if (displayTime > maxTime) {
@@ -229,7 +230,11 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			renderGridAxisNumber(config, W, H, &painter);
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
-				renderContaminants(config, W, H, droplets, contamination, &painter);
+				if (timer.isActive()) {
+					renderContaminants(config, W, H, droplets, contamination, &painter);
+				} else {
+					renderContaminantCount(config, W, H, contamination, &painter);
+				}
 				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
 			}
 			renderGrid(config, W, H, &painter);

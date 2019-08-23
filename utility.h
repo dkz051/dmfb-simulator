@@ -55,9 +55,9 @@ struct DropletStatus {
 	qreal t; // time
 	qint32 x, y; // center position
 	qreal rx, ry; // x- and y- radii
-	qint32 a, r, g, b; // color components
+	qint32 a, h, s, v; // color components
 	DropletStatus();
-	DropletStatus(qreal t, qint32 x, qint32 y, qreal rx, qreal ry, qint32 a, qint32 r, qint32 g, qint32 b);
+	DropletStatus(qreal t, qint32 x, qint32 y, qreal rx, qreal ry, qint32 a, qint32 h, qint32 s, qint32 v);
 };
 
 struct Command {

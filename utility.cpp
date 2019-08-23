@@ -1,6 +1,7 @@
 #include "utility.h"
 
 #include <QFile>
+#include <QDebug>
 #include <QTextStream>
 #include <QStringList>
 
@@ -10,7 +11,7 @@ const qreal eps = 1e-8;
 const qreal inf = 1e100;
 
 const qreal radius = 0.4;
-const qreal rContaminant = 0.2;
+const qreal rContaminant = 0.25;
 const qint32 contaminationDots = 1;
 
 const qreal acceleration = 1.0;
@@ -48,7 +49,7 @@ Contaminant::Contaminant(qint32 time, qint32 id, qint32 x, qint32 y) : time(time
 
 DropletStatus::DropletStatus() {}
 
-DropletStatus::DropletStatus(qreal t, qint32 x, qint32 y, qreal rx, qreal ry, qint32 a, qint32 r, qint32 g, qint32 b) : t(t), x(x), y(y), rx(rx), ry(ry), a(a), r(r), g(g), b(b) {}
+DropletStatus::DropletStatus(qreal t, qint32 x, qint32 y, qreal rx, qreal ry, qint32 a, qint32 h, qint32 s, qint32 v) : t(t), x(x), y(y), rx(rx), ry(ry), a(a), h(h), s(s), v(v) {}
 
 Command::Command(CommandType type, qint32 t, qint32 x1, qint32 y1, qint32 x2, qint32 y2, qint32 x3, qint32 y3) : type(type), t(t), x1(x1), y1(y1), x2(x2), y2(y2), x3(x3), y3(y3) {}
 
@@ -63,9 +64,9 @@ DropletStatus interpolation(DropletStatus a, DropletStatus b, qreal t, qreal &x,
 	DropletStatus ans = a;
 	qreal p = easing((t - a.t) / (b.t - a.t));
 	ans.a += (b.a - a.a) * p;
-	ans.r += (b.r - a.r) * p;
-	ans.g += (b.g - a.g) * p;
-	ans.b += (b.b - a.b) * p;
+	ans.h += (b.h - a.h) * p;
+	ans.s += (b.s - a.s) * p;
+	ans.v += (b.v - a.v) * p;
 	ans.x += (b.x - a.x) * p;
 	ans.y += (b.y - a.y) * p;
 	ans.rx += (b.rx - a.rx) * p;
@@ -212,10 +213,10 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				error = ErrorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
-			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randInt(0, 255), randInt(0, 255), randInt(0, 255));
+			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randInt(0, 359), randInt(127, 255), randInt(127, 255));
 
 			moveToPort(c.x1, c.y1, config);
-			DropletStatus mnt0(c.t - 1, c.x1, c.y1, 0, 0, 0, mnt.r, mnt.g, mnt.b);
+			DropletStatus mnt0(c.t - 1, c.x1, c.y1, 0, 0, 0, mnt.h, mnt.s, mnt.v);
 
 			if (!putDroplet(mnt.x, mnt.y, count++)) {
 				error = ErrorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): static distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
@@ -243,11 +244,11 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 
 			auto iter = droplets[id].back();
 
-			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, iter.r, iter.g, iter.b);
+			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, iter.h, iter.s, iter.v);
 
 			moveToPort(c.x1, c.y1, config);
 
-			DropletStatus mnt1(c.t + 1, c.x1, c.y1, 0, 0, 0, iter.r, iter.g, iter.b);
+			DropletStatus mnt1(c.t + 1, c.x1, c.y1, 0, 0, 0, iter.h, iter.s, iter.v);
 
 			droplets[id].push_back(mnt);
 			droplets[id].push_back(mnt1);
@@ -264,8 +265,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 
 			auto iter = droplets[id].back();
 
-			DropletStatus mnt1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.r, iter.g, iter.b),
-				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.r, iter.g, iter.b);
+			DropletStatus mnt1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.h, iter.s, iter.v),
+				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.h, iter.s, iter.v);
 
 			droplets[id].push_back(mnt1);
 			removeList.push_back(std::make_pair(mnt1.x, mnt1.y));
@@ -299,8 +300,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 
 			auto iter = droplets[id1].back();
 			auto jter = droplets[id2].back();
-			DropletStatus s1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.r, iter.g, iter.b);
-			DropletStatus s2(c.t, c.x2, c.y2, radius, radius, jter.a, jter.r, jter.g, jter.b);
+			DropletStatus s1(c.t, c.x1, c.y1, radius, radius, iter.a, iter.h, iter.s, iter.v);
+			DropletStatus s2(c.t, c.x2, c.y2, radius, radius, jter.a, jter.h, jter.s, jter.v);
 
 			droplets[id1].push_back(s1);
 			droplets[id2].push_back(s2);
@@ -312,9 +313,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				radius * (abs(s1.x - s2.x) + 1),
 				radius * (abs(s1.y - s2.y) + 1),
 				(s1.a + s2.a) / 2,
-				(s1.r + s2.r) / 2,
-				(s1.g + s2.g) / 2,
-				(s1.b + s2.b) / 2
+				((s1.h + s2.h) / 2 + randInt(0, 1) * 180) % 360,
+				(s1.s + s2.s) / 2,
+				(s1.v + s2.v) / 2
 			);
 
 			droplets[id1].push_back(s);
@@ -347,9 +348,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				radius,
 				radius,
 				iter.a,
-				iter.r,
-				iter.g,
-				iter.b
+				iter.h,
+				iter.s,
+				iter.v
 			);
 
 			posMap[std::make_pair(c.x3, c.y3)] = count++; // Do not use putDroplet here
@@ -377,9 +378,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				radius * (abs(c.x2 - c.x3) + 1),
 				radius * (abs(c.y2 - c.y3) + 1),
 				iter.a,
-				iter.r,
-				iter.g,
-				iter.b
+				iter.h,
+				iter.s,
+				iter.v
 			); // s: before split
 
 			droplets[id].push_back(iter);
@@ -406,9 +407,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				radius,
 				radius,
 				iter.a,
-				iter.r <= 127 ? randInt(0, 2 * iter.r) : randInt(2 * iter.r - 255, 255),
-				iter.g <= 127 ? randInt(0, 2 * iter.g) : randInt(2 * iter.g - 255, 255),
-				iter.b <= 127 ? randInt(0, 2 * iter.b) : randInt(2 * iter.b - 255, 255)
+				randInt(0, 359),
+				iter.s <= 191 ? randInt(127, 2 * iter.s - 127) : randInt(2 * iter.s - 255, 255),
+				iter.v <= 191 ? randInt(127, 2 * iter.v - 127) : randInt(2 * iter.v - 255, 255)
 			), v(
 				c.t + 1,
 				c.x3,
@@ -416,9 +417,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				radius,
 				radius,
 				iter.a,
-				2 * iter.r - u.r,
-				2 * iter.g - u.g,
-				2 * iter.b - u.b
+				(2 * iter.h - u.h + 360) % 360,
+				2 * iter.s - u.s,
+				2 * iter.v - u.v
 			);
 
 			qint32 nid1 = count++, nid2 = count++;
@@ -510,7 +511,9 @@ qreal easing(qreal t) {
 }
 
 qint32 randInt(qint32 L, qint32 R) {
-	return qint32(rand() / qreal(RAND_MAX) * (R - L)) + L;
+	qint32 ans = qint32(rand() / qreal(RAND_MAX) * (R - L)) + L;
+	qDebug() << QString("randInt(%1, %2) = %3").arg(L).arg(R).arg(ans);
+	return ans;
 }
 
 qreal randReal(qreal L, qreal R) {

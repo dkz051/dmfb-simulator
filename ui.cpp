@@ -174,7 +174,7 @@ void renderDroplets(const ChipConfig &config, const QVector<Droplet> &droplets, 
 		if (!getRealTimeStatus(droplets[i], time, st, x, y)) {
 			continue;
 		};
-		QColor color(st.r, st.g, st.b, st.a);
+		QColor color = QColor::fromHsv(st.h, st.s, st.v, st.a);
 		g->setPen(color);
 		g->setBrush(color);
 		g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), st.rx * grid, st.ry * grid);
@@ -248,11 +248,33 @@ void renderContaminants(const ChipConfig &config, qreal W, qreal H, const QVecto
 	for (qint32 x = 0; x < C; ++x) {
 		for (qint32 y = 0; y < R; ++y) {
 			for (auto s: contaminants[x][y]) {
-				auto it = droplets[s].first();
-				g->setBrush(QColor(it.r, it.g, it.b, 0xff));
-				for (qint32 cnt = 1; cnt <= contaminationDots; ++cnt) {
-					g->drawEllipse(QPointF((x + randReal(rContaminant, 1.0 - rContaminant)) * grid, (y + randReal(rContaminant, 1.0 - rContaminant)) * grid), rContaminant * grid, rContaminant * grid);
-				}
+				auto it = droplets[s][std::min(droplets[s].size() - 1, 1)];
+				g->setBrush(QColor::fromHsv(it.h, it.s, it.v, 0xff));
+			//	for (qint32 cnt = 1; cnt <= contaminationDots; ++cnt) {
+			//		g->drawEllipse(QPointF((x + randReal(rContaminant, 1.0 - rContaminant)) * grid, (y + randReal(rContaminant, 1.0 - rContaminant)) * grid), rContaminant * grid, rContaminant * grid);
+			//	}
+				g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), rContaminant * grid, rContaminant * grid);
+			}
+		}
+	}
+
+	g->restore();
+}
+
+void renderContaminantCount(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g) {
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setPen(Qt::black);
+	for (qint32 x = 0; x < C; ++x) {
+		for (qint32 y = 0; y < R; ++y) {
+			if (contaminants[x][y].count() > 0) {
+				g->drawText(QRectF(x * grid, y * grid, grid, grid), Qt::AlignCenter, QString("%1").arg(contaminants[x][y].count()));
 			}
 		}
 	}
