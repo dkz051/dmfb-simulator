@@ -2,14 +2,16 @@
 
 #include <string>
 
-#include <QMessageBox>
-#include <QFileDialog>
-#include <QDebug>
 #include <QFile>
+#include <QDebug>
+#include <QStack>
+#include <QQueue>
 #include <QMimeData>
-#include <QDragEnterEvent>
 #include <QDropEvent>
 #include <QTextStream>
+#include <QMessageBox>
+#include <QFileDialog>
+#include <QDragEnterEvent>
 
 #include "dlgabout.h"
 #include "dlgnewchip.h"
@@ -20,10 +22,20 @@
 #include "ui.h"
 #include "utility.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow), timer(this), dataLoaded(false), sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav"), error(-2, "") {
+MainWindow::MainWindow(QWidget *parent) :
+	QMainWindow(parent), ui(new Ui::MainWindow),
+	dataLoaded(false),
+	sndMove("qrc:/sounds/move.wav"), sndMerge("qrc:/sounds/merge.wav"), sndSplitting("qrc:/sounds/splitting.wav"), sndSplit("qrc:/sounds/split.wav"), sndError("qrc:/sounds/error.wav"),
+	error(-2, ""),
+	timerRun(this), timerWash(this) {
 	ui->setupUi(this);
-	timer.setInterval(25);
-	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
+
+	timerRun.setInterval(25);
+	connect(&timerRun, SIGNAL(timeout()), this, SLOT(onRunTimeout()));
+
+	timerWash.setInterval(25);
+	connect(&timerWash, SIGNAL(timeout()), this, SLOT(onWashTimeout()));
+
 	ui->picDisplay->installEventFilter(this);
 
 	ui->lblWashObstacleHints->setVisible(false);
@@ -124,6 +136,8 @@ void MainWindow::loadFile(const QString &url) {
 	clearObstacles();
 	clearContaminants();
 
+	washColor = QColor::fromHsv(randInt(0, 359), randInt(127, 255), randInt(127, 255), 0xff);
+
 	maxTime = (maxTime / 1000) * 1000; // Truncate to seconds (in case any command failed)
 
 	ui->actionStart->setEnabled(true);
@@ -139,11 +153,11 @@ void MainWindow::render() {
 	this->update();
 }
 
-void MainWindow::onTimeout() {
+void MainWindow::onRunTimeout() {
 	qint64 thisTime = QDateTime::currentMSecsSinceEpoch();
 	qint64 lastDisplay = displayTime;
 
-	displayTime += (thisTime - lastTime) * acceleration;
+	displayTime += (thisTime - lastTime) * runAcceleration;
 	lastTime = thisTime;
 
 	auto iter = sounds.lowerBound(lastDisplay / 1000.0);
@@ -175,7 +189,7 @@ void MainWindow::onTimeout() {
 }
 
 void MainWindow::on_actionStart_triggered() {
-	timer.start();
+	timerRun.start();
 	lastTime = QDateTime::currentMSecsSinceEpoch();
 
 	ui->actionStart->setEnabled(false);
@@ -191,8 +205,9 @@ void MainWindow::on_actionStart_triggered() {
 }
 
 void MainWindow::on_actionPause_triggered() {
-	timer.stop();
-	displayTime = qint32(ceil(displayTime / 1000.0)) * 1000; // set to the next second (for the convenience of wash)
+	timerRun.stop();
+
+	displayTime = qint32(floor(displayTime / 1000.0)) * 1000; // truncate to last second
 
 	ui->actionStart->setEnabled(true);
 	ui->actionPause->setEnabled(false);
@@ -259,14 +274,17 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 				renderContaminants(config, W, H, randSeed, droplets, contamination, &painter);
 				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
 				renderWashObstacles(config, W, H, obstacles, &painter);
-				if (!timer.isActive() && displayTime == maxTime) {
+				if (!timerRun.isActive() && displayTime == maxTime) {
 					renderContaminantCount(config, W, H, contamination, &painter);
+				}
+				if (timerWash.isActive()) {
+					renderWash(config, W, H, curWashTime / 1000.0, steps, washColor, &painter);
 				}
 			}
 			renderGrid(config, W, H, &painter);
 			return true;
 		} else if (e->type() == QEvent::MouseButtonPress) {
-			if (timer.isActive() || !config.hasWash) {
+			if (timerRun.isActive() || !config.hasWash) {
 				return false; // Cannot set obstacles when running/washing or if no wash/waste port exists
 			}
 
@@ -279,6 +297,10 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 
 			qint32 X = qint32(floor((ev->x() - (W - grid * C) / 2.0) / grid));
 			qint32 Y = qint32(floor((ev->y() - (H - grid * R) / 2.0) / grid));
+
+			if (X < 0 || X >= config.columns || Y < 0 || Y >= config.rows) {
+				return false;
+			}
 
 			if (isPortType(X, Y, config, PortType::wash) || isPortType(X, Y, config, PortType::waste)) {
 				obstacles[X][Y] = false;
@@ -335,4 +357,223 @@ void MainWindow::clearContaminants() {
 			contamination[i].resize(config.rows);
 		}
 	}
+}
+
+bool MainWindow::wash(QVector<Position> &steps) {
+	// Step 1: mark obstacles
+	auto ob = obstacles;
+	for (qint32 i = 0; i < droplets.size(); ++i) {
+		DropletStatus pos;
+		qreal x, y;
+		if (getRealTimeStatus(droplets[i], displayTime / 1000.0, pos, x, y)) {
+			for (qint32 dX = qint32(ceil(x - pos.rx)); dX <= qint32(floor(x + pos.rx)); ++dX) {
+				for (qint32 dY = qint32(ceil(y - pos.ry)); dY <= qint32(floor(y + pos.ry)); ++dY) {
+					for (qint32 k = 0; k < 8; ++k) {
+						qint32 xx = dX + dirX[k], yy = dY + dirY[k];
+						if (xx >= 0 && xx < config.columns && yy >= 0 && yy < config.rows) {
+							ob[xx][yy] = true;
+						}
+						ob[pos.x][pos.y] = true;
+					}
+				}
+			}
+		}
+	}
+	// Step 2: find [wash input] and [waste] ports
+	qint32 sx = -1, sy = -1, tx = -1, ty = -1;
+	for (qint32 i = 0; i < config.columns; ++i) {
+		for (qint32 j = 0; j < config.rows; ++j) {
+			if (isPortType(i, j, config, PortType::wash)) {
+				sx = i;
+				sy = j;
+			} else if (isPortType(i, j, config, PortType::waste)) {
+				tx = i;
+				ty = j;
+			}
+		}
+	}
+	assert(sx >= 0 && sy >= 0 && tx >= 0 && ty >= 0);
+	if (ob[sx][sy] || ob[tx][ty]) {
+		QMessageBox::warning(this, tr("Error washing"), tr("Cannot wash the chip: no valid route."));
+		return false;
+	}
+	// Step 3: initialize [distance] matrix
+	QVector<QVector<qint32>> distance;
+	distance.resize(config.columns);
+	for (qint32 i = 0; i < config.columns; ++i) {
+		distance[i].resize(config.rows);
+		for (qint32 j = 0; j < config.rows; ++j) {
+			distance[i][j] = -1;
+		}
+	}
+	distance[sx][sy] = 0;
+	// Step 4: find the route
+	QVector<QVector<bool>> washed;
+	washed.resize(config.columns);
+	for (qint32 i = 0; i < config.columns; ++i) {
+		washed[i].resize(config.rows);
+		for (qint32 j = 0; j < config.rows; ++j) {
+			washed[i][j] = false;
+		}
+	}
+
+	steps.clear();
+	QQueue<Position> queue;
+	queue.enqueue(Position(sx, sy));
+	steps.push_back(Position(sx, sy));
+	moveToPort(sx, sy, config);
+	steps.push_front(Position(sx, sy));
+	while (!queue.empty()) {
+		Position pos = queue.dequeue();
+		for (qint32 k = 0; k < 4; ++k) {
+			qint32 nx = pos.first + dirX[k], ny = pos.second + dirY[k];
+			if (nx < 0 || nx >= config.columns || ny < 0 || ny >= config.rows) {
+				continue;
+			}
+			if (ob[nx][ny]) {
+				continue;
+			}
+			if (distance[nx][ny] == -1 || distance[nx][ny] > distance[pos.first][pos.second] + 1) {
+				distance[nx][ny] = distance[pos.first][pos.second] + 1;
+
+				if (contamination[nx][ny].size() > 0 && !washed[nx][ny]) {
+					washRoute(config, steps, nx, ny, ob);
+					washed[nx][ny] = true;
+					queue.push_front(Position(nx, ny));
+				} else {
+					queue.enqueue(Position(nx, ny));
+				}
+			}
+		}
+	}
+	if (distance[tx][ty] == -1) {
+		QMessageBox::warning(this, tr("Error washing"), tr("Cannot wash the chip: no valid route."));
+		return false;
+	}
+	if (steps.size() <= 2) {
+		QMessageBox::information(this, tr("Hint"), tr("Nothing to wash."));
+		return false;
+	}
+	washRoute(config, steps, tx, ty, ob);
+	moveToPort(tx, ty, config);
+	steps.push_back(Position(tx, ty));
+
+	for (qint32 i = 0; i < steps.size(); ++i) {
+		qDebug() << steps[i].first << ' ' << steps[i].second;
+	}
+
+	return true;
+}
+
+void MainWindow::washRoute(const ChipConfig &config, QVector<Position> &steps, qint32 tx, qint32 ty, const QVector<QVector<bool>> &obstacles) {
+	QVector<QVector<qint32>> distance;
+	QVector<QVector<qint32>> ancestor;
+	distance.resize(config.columns);
+	for (qint32 i = 0; i < config.columns; ++i) {
+		distance[i].resize(config.rows);
+		for (qint32 j = 0; j < config.rows; ++j) {
+			distance[i][j] = -1;
+		}
+	}
+	ancestor.resize(config.columns);
+	for (qint32 i = 0; i < config.columns; ++i) {
+		ancestor[i].resize(config.rows);
+		for (qint32 j = 0; j < config.rows; ++j) {
+			ancestor[i][j] = -1;
+		}
+	}
+	auto iter = steps.back();
+	QQueue<Position> queue;
+	queue.push_back(iter);
+	distance[iter.first][iter.second] = 0;
+	while (!queue.empty()) {
+		Position pos = queue.dequeue();
+		for (qint32 k = 0; k < 4; ++k) {
+			Position npos(pos.first + dirX[k], pos.second + dirY[k]);
+			if (npos.first < 0 || npos.first >= config.columns || npos.second < 0 || npos.second >= config.rows) {
+				continue;
+			}
+			if (obstacles[npos.first][npos.second]) {
+				continue;
+			}
+			if (distance[npos.first][npos.second] == -1 || distance[npos.first][npos.second] > distance[pos.first][pos.second] + 1) {
+				distance[npos.first][npos.second] = distance[pos.first][pos.second] + 1;
+				ancestor[npos.first][npos.second] = k;
+				queue.enqueue(npos);
+				if (npos.first == tx && npos.second == ty) {
+					queue.clear();
+					break;
+				}
+			}
+		}
+	}
+	if (distance[tx][ty] == -1) {
+		QMessageBox::warning(this, tr("Failed!"), tr("Assertion failed!"));
+	}
+	QStack<Position> stk;
+	for (qint32 x = tx, y = ty; x != iter.first || y != iter.second; ) {
+		stk.push(Position(x, y));
+		qint32 dir = ancestor[x][y];
+		x -= dirX[dir];
+		y -= dirY[dir];
+	}
+	while (!stk.empty()) {
+		steps.push_back(stk.pop());
+	}
+}
+
+void MainWindow::on_actionWash_triggered() {
+	if (wash(steps)) {
+		lastWashTime = QDateTime::currentMSecsSinceEpoch();
+		curWashTime = 0;
+
+		ui->actionNewChip->setEnabled(false);
+		ui->actionLoadCommandFile->setEnabled(false);
+		ui->actionStart->setEnabled(false);
+		ui->actionPause->setEnabled(false);
+		ui->actionStep->setEnabled(false);
+		ui->actionRevert->setEnabled(false);
+		ui->actionReset->setEnabled(false);
+
+		ui->actionWash->setEnabled(false);
+
+	//	clearContamination(0);
+		timerWash.start();
+	}
+}
+
+void MainWindow::onWashTimeout() {
+	qint64 thisWashTime = QDateTime::currentMSecsSinceEpoch();
+	qint64 lastDisplayWashTime = curWashTime;
+	curWashTime += (thisWashTime - lastWashTime) * washAcceleration;
+	lastWashTime = thisWashTime;
+
+	if (curWashTime >= (steps.size() - 1) * 1000) {
+		curWashTime = (steps.size() - 1) * 1000;
+
+		ui->actionNewChip->setEnabled(true);
+		ui->actionLoadCommandFile->setEnabled(true);
+		ui->actionStart->setEnabled(true);
+		ui->actionPause->setEnabled(false);
+		ui->actionStep->setEnabled(true);
+		ui->actionRevert->setEnabled(true);
+		ui->actionReset->setEnabled(true);
+
+		ui->actionWash->setEnabled(true);
+		timerWash.stop();
+	}
+
+	if (lastDisplayWashTime / 1000 != curWashTime / 1000) {
+		clearContamination(qint32(curWashTime / 1000));
+	}
+
+	ui->picDisplay->update();
+}
+
+void MainWindow::clearContamination(qint32 second) {
+	if (second + 1 >= steps.size()) { // back() element is the waste port (which is out of range)
+		return;
+	}
+	Position pos = steps[second];
+	contamination[pos.first][pos.second].clear();
 }

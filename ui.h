@@ -17,5 +17,6 @@ void renderGridAxisNumber(const ChipConfig &config, qreal W, qreal H, QPainter *
 void renderContaminants(const ChipConfig &config, qreal W, qreal H, quint32 randSeed, const QVector<Droplet> &droplets, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
 void renderContaminantCount(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<QSet<qint32>>> &contaminants, QPainter *g);
 void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<bool>> &obstacles, QPainter *g);
+void renderWash(const ChipConfig &config, qreal W, qreal H, qreal time, const QVector<Position> &steps, QColor color, QPainter *g);
 
 #endif // UI_H

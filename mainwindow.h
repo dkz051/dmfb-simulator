@@ -42,7 +42,8 @@ private slots:
 	void render();
 	void on_actionLoadCommandFile_triggered();
 
-	void onTimeout();
+	void onRunTimeout();
+	void onWashTimeout();
 	void on_actionStart_triggered();
 
 	void on_actionPause_triggered();
@@ -56,25 +57,43 @@ private slots:
 	void playSound(qint32 sounds);
 	void clearContaminants();
 	void clearObstacles();
+	bool wash(QVector<Position> &steps);
+	void washRoute(const ChipConfig &config, QVector<Position> &steps, qint32 tx, qint32 ty, const QVector<QVector<bool>> &obstacles);
+	void on_actionWash_triggered();
+
+	void clearContamination(qint32 second);
+
 private:
 	Ui::MainWindow *ui;
 
-	QTimer timer;
-	qint64 lastTime, displayTime;
-
-	qint64 minTime, maxTime;
-	QVector<Droplet> droplets;
+	// Chip Config
 	bool dataLoaded;
 	ChipConfig config;
 
+	// Sound Effects
 	QSound sndMove, sndMerge, sndSplitting, sndSplit, sndError;
 	SoundList sounds;
-	ErrorLog error;
-	ContaminantList contaminants;
 
+	// Error Info
+	ErrorLog error;
+
+	// Contamination
+	ContaminantList contaminants;
 	QVector<QVector<QSet<qint32>>> contamination;
 	quint32 randSeed;
+
+	// Run Timer
+	QTimer timerRun;
+	qint64 lastTime, displayTime;
+	qint64 minTime, maxTime;
+	QVector<Droplet> droplets;
+
+	// Wash
+	QTimer timerWash;
 	QVector<QVector<bool>> obstacles;
+	QVector<Position> steps;
+	qint64 lastWashTime, curWashTime;
+	QColor washColor;
 };
 
 #endif // MAINWINDOW_H

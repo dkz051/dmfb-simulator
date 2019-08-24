@@ -14,7 +14,8 @@ const qreal radius = 0.4;
 const qreal rContaminant = 0.2;
 const qint32 contaminationDots = 10;
 
-const qreal acceleration = 1.0;
+const qreal runAcceleration = 1.0;
+const qreal washAcceleration = runAcceleration * 4.0;
 
 const qreal soundOffset = 0.3;
 const qreal mergingTimeInterval = 1.6;
@@ -24,6 +25,15 @@ const qint32 sndFxMove = 1;
 const qint32 sndFxMerge = 2;
 const qint32 sndFxSplitting = 4;
 const qint32 sndFxSplit = 8;
+
+const qint32 dirx[8] = {-1, 0, 0, 1, -1, -1, 1, 1};
+const qint32 diry[8] = {0, 1, -1, 0, -1, 1, -1, 1};
+
+const QColor halfSaturatedRed = QColor::fromHsv(0, 127, 255, 127);
+const QColor halfSaturatedGreen = QColor::fromHsv(90, 127, 255, 127);
+const QColor halfSaturatedCyan = QColor::fromHsv(180, 127, 255, 127);
+const QColor halfSaturatedPurple = QColor::fromHsv(270, 127, 255, 127);
+const QColor fullSaturatedGrey = QColor::fromRgb(192, 192, 192, 255);
 
 void ChipConfig::init(qint32 rows, qint32 columns) {
 	if (rows < 3 || rows > 12 || columns < 3 || columns > 12 || (rows == 3 && columns == 3)) {
@@ -81,12 +91,12 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 	file.open(QFile::ReadOnly | QFile::Text);
 	QTextStream fs(&file);
 
-	QMap<std::pair<qint32, qint32>, qint32> posMap;
+	QMap<Position, qint32> posMap;
 
 	QVector<Command> commandList;
 
 	auto findIdFromPosition = [&](qint32 x, qint32 y) -> qint32 {
-		auto pos = std::make_pair(x, y);
+		auto pos = Position(x, y);
 		if (!posMap.count(pos)) {
 			return -1;
 		} else {
@@ -95,12 +105,10 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 	};
 
 	auto putDroplet = [&](qint32 x, qint32 y, qint32 id) -> bool {
-		const qint32 dirx[8] = {-1, -1, -1, 0, 0, 1, 1, 1};
-		const qint32 diry[8] = {-1, 0, 1, -1, 1, -1, 0, 1};
-		auto pos = std::make_pair(x, y);
+		auto pos = Position(x, y);
 		for (qint32 k = 0; k < 8; ++k) {
 			qint32 xx = x + dirx[k], yy = y + diry[k];
-			auto pok = std::make_pair(xx, yy);
+			auto pok = Position(xx, yy);
 			if (posMap.count(pok) && posMap[pok] != id) {
 				return false;
 			}
@@ -110,7 +118,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 	};
 
 	auto removeDroplet = [&](qint32 x, qint32 y) {
-		posMap.remove(std::make_pair(x, y));
+		posMap.remove(Position(x, y));
 	};
 
 	qint32 count = 0;
@@ -203,7 +211,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 	sounds.clear();
 	contaminants.clear();
 
-	QVector<std::pair<qint32, qint32>> removeList;
+	QVector<Position> removeList;
 	for (qint32 i = 0; i < commandList.size(); ++i) {
 		Command &c = commandList[i];
 		if (c.type == CommandType::Input) {
@@ -252,7 +260,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 
 			droplets[id].push_back(mnt);
 			droplets[id].push_back(mnt1);
-			removeList.push_back(std::make_pair(mnt.x, mnt.y));
+			removeList.push_back(Position(mnt.x, mnt.y));
 		} else if (c.type == CommandType::Move || c.type == CommandType::Mix) {
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 
@@ -269,7 +277,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				mnt2(c.t + 1, c.x2, c.y2, radius, radius, iter.a, iter.h, iter.s, iter.v);
 
 			droplets[id].push_back(mnt1);
-			removeList.push_back(std::make_pair(mnt1.x, mnt1.y));
+			removeList.push_back(Position(mnt1.x, mnt1.y));
 
 			if (!putDroplet(mnt2.x, mnt2.y, id)) {
 				error = ErrorLog(c.t, QString("Cannot %1 on time %2, from (%3, %4) to (%5, %6): dynamic distance constraint failed.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
@@ -294,8 +302,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				break;
 			}
 
-			posMap.remove(std::make_pair(c.x1, c.y1));
-			posMap.remove(std::make_pair(c.x2, c.y2));
+			posMap.remove(Position(c.x1, c.y1));
+			posMap.remove(Position(c.x2, c.y2));
 			// Note that here we cannot use the remove-list
 
 			auto iter = droplets[id1].back();
@@ -321,9 +329,9 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			droplets[id1].push_back(s);
 			droplets[id2].push_back(s);
 
-			posMap[std::make_pair(s1.x, s1.y)] = id2;
-			posMap[std::make_pair(s2.x, s2.y)] = id2;
-			posMap[std::make_pair(s.x, s.y)] = id2;
+			posMap[Position(s1.x, s1.y)] = id2;
+			posMap[Position(s2.x, s2.y)] = id2;
+			posMap[Position(s.x, s.y)] = id2;
 
 			assert(putDroplet(s1.x, s1.y, id2) && putDroplet(s2.x, s2.y, id2) && putDroplet(s.x, s.y, id2));
 
@@ -335,8 +343,8 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 
 			assert(id >= 0 && id < droplets.size());
 
-			removeList.push_back(std::make_pair(c.x1, c.y1));
-			removeList.push_back(std::make_pair(c.x2, c.y2));
+			removeList.push_back(Position(c.x1, c.y1));
+			removeList.push_back(Position(c.x2, c.y2));
 			// (c.x3, c.y3) will be occupied later, so do not remove it here
 
 			auto iter = droplets[id].back();
@@ -353,7 +361,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 				iter.v
 			);
 
-			posMap[std::make_pair(c.x3, c.y3)] = count++; // Do not use putDroplet here
+			posMap[Position(c.x3, c.y3)] = count++; // Do not use putDroplet here
 
 			droplets.push_back(Droplet({iter, s}));
 
@@ -497,6 +505,7 @@ bool getRealTimeStatus(const Droplet &d, qreal t, DropletStatus &ans, qreal &x, 
 	qint32 D = qint32(std::lower_bound(d.begin(), d.end(), mntTmp, [](DropletStatus a, DropletStatus b) -> bool { return a.t < b.t; }) - d.begin());
 	if (D >= d.size()) return false; // out of range; no longer exists
 	if (D <= 0) return false; // not present yet
+	if (D + 1 == d.size() && fabs(t - d[D].t) < eps) return false; // will disappear soon
 
 	ans = interpolation(d[D - 1], d[D], t, x, y);
 	return true;

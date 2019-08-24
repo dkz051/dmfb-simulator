@@ -91,12 +91,12 @@
     <addaction name="actionStart"/>
     <addaction name="actionPause"/>
     <addaction name="separator"/>
-    <addaction name="actionStep"/>
     <addaction name="actionRevert"/>
-    <addaction name="separator"/>
-    <addaction name="actionReset"/>
+    <addaction name="actionStep"/>
     <addaction name="separator"/>
     <addaction name="actionWash"/>
+    <addaction name="separator"/>
+    <addaction name="actionReset"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -130,12 +130,12 @@
    <addaction name="actionStart"/>
    <addaction name="actionPause"/>
    <addaction name="separator"/>
-   <addaction name="actionStep"/>
    <addaction name="actionRevert"/>
-   <addaction name="separator"/>
-   <addaction name="actionReset"/>
+   <addaction name="actionStep"/>
    <addaction name="separator"/>
    <addaction name="actionWash"/>
+   <addaction name="separator"/>
+   <addaction name="actionReset"/>
   </widget>
   <action name="actionNewChip">
    <property name="text">
@@ -202,7 +202,7 @@
     <string>S&amp;tep</string>
    </property>
    <property name="shortcut">
-    <string>F7</string>
+    <string>F8</string>
    </property>
   </action>
   <action name="actionRevert">
@@ -213,7 +213,7 @@
     <string>Re&amp;vert</string>
    </property>
    <property name="shortcut">
-    <string>F8</string>
+    <string>F7</string>
    </property>
   </action>
   <action name="actionReset">
@@ -224,7 +224,7 @@
     <string>&amp;Reset</string>
    </property>
    <property name="shortcut">
-    <string>F9</string>
+    <string>F11</string>
    </property>
   </action>
   <action name="actionWash">
@@ -233,6 +233,9 @@
    </property>
    <property name="text">
     <string>&amp;Wash</string>
+   </property>
+   <property name="shortcut">
+    <string>F9</string>
    </property>
   </action>
  </widget>

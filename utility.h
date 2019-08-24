@@ -17,7 +17,8 @@ extern const qreal radius;
 extern const qreal rContaminant;
 extern const qint32 contaminationDots;
 
-extern const qreal acceleration;
+extern const qreal runAcceleration;
+extern const qreal washAcceleration;
 
 extern const qreal soundOffset;
 extern const qreal mergingTimeInterval;
@@ -27,6 +28,15 @@ extern const qint32 sndFxMove;
 extern const qint32 sndFxMerge;
 extern const qint32 sndFxSplitting;
 extern const qint32 sndFxSplit;
+
+extern const qint32 dirx[8];
+extern const qint32 diry[8];
+
+extern const QColor halfSaturatedRed;
+extern const QColor halfSaturatedGreen;
+extern const QColor halfSaturatedCyan;
+extern const QColor halfSaturatedPurple;
+extern const QColor fullSaturatedGrey;
 
 enum CommandType {
 	Input, Output, Move, Mix,
@@ -75,6 +85,7 @@ struct ErrorLog {
 typedef QVector<Contaminant> ContaminantList;
 typedef QVector<DropletStatus> Droplet;
 typedef QMap<qreal, qint32> SoundList;
+typedef std::pair<qint32, qint32> Position;
 
 DropletStatus interpolation(DropletStatus a, DropletStatus b, qreal t, qreal &x, qreal &y);
 

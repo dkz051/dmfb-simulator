@@ -47,7 +47,7 @@ void renderPortConfigMask(const ChipConfig &config, qreal W, qreal H, QPainter *
 
 	g->setPen(Qt::PenStyle::NoPen);
 
-	g->setBrush(QColor(192, 192, 192, 255));
+	g->setBrush(fullSaturatedGrey);
 	g->drawRect(QRectF(grid, grid, (C - 2) * grid, (R - 2) * grid));
 
 	g->restore();
@@ -88,26 +88,26 @@ void renderPort(qreal grid, qreal X, qreal Y, qreal W, qreal H, PortType T, QPai
 
 	switch (T) {
 		case PortType::input: {
-			color = Qt::yellow;
+			color = halfSaturatedPurple;
 			forecolor = Qt::black;
 			str = "Input";
 			break;
 		}
 		case PortType::output: {
-			color = Qt::cyan;
+			color = halfSaturatedCyan;
 			forecolor = Qt::black;
 			str = "Output";
 			break;
 		}
 		case PortType::wash: {
-			color = Qt::green;
+			color = halfSaturatedGreen;
 			forecolor = Qt::black;
 			str = "Wash";
 			break;
 		}
 		case PortType::waste: {
-			color = Qt::red;
-			forecolor = Qt::white;
+			color = halfSaturatedRed;
+			forecolor = Qt::black;
 			str = "Waste";
 			break;
 		}
@@ -300,7 +300,7 @@ void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVect
 
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
-	g->setPen(Qt::white);
+	g->setPen(fullSaturatedGrey);
 	for (qint32 x = 0; x < C; ++x) {
 		for (qint32 y = 0; y < R; ++y) {
 			if (obstacles[x][y]) {
@@ -309,6 +309,49 @@ void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVect
 			}
 		}
 	}
+
+	g->restore();
+}
+
+void renderWash(const ChipConfig &config, qreal W, qreal H, qreal time, const QVector<Position> &steps, QColor color, QPainter *g) {
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setClipping(true);
+	g->setClipRect(QRectF(0.0, 0.0, C * grid, R * grid));
+
+	DropletStatus a, b;
+
+	a.t = floor(time);
+	b.t = ceil(time);
+
+	qint32 t1 = qint32(a.t), t2 = qint32(b.t);
+
+	a.x = steps[t1].first;
+	a.y = steps[t1].second;
+	b.x = steps[t2].first;
+	b.y = steps[t2].second;
+
+	qreal x, y;
+	interpolation(a, b, time, x, y);
+
+	g->setPen(color);
+	g->setBrush(color);
+	g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), radius * grid, radius * grid);
+
+	QFont font;
+	font.setPointSizeF(std::max(grid / 2.5, 4.0));
+	g->setPen(Qt::white);
+	g->setFont(font);
+	g->drawText(QRectF(x * grid, y * grid, grid, grid), Qt::AlignCenter, "W");
+
+	g->setClipping(false);
 
 	g->restore();
 }
