@@ -42,7 +42,7 @@ struct ChipConfig {
 	qint32 columns;
 	QVector<PortType> L, T, R, B;
 	bool valid;
-
+	bool hasWash;
 	void init(qint32 rows = -1, qint32 columns = -1);
 };
 

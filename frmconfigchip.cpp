@@ -23,6 +23,9 @@ frmConfigChip::frmConfigChip(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
 void frmConfigChip::setDimensions(qint32 rows, qint32 columns) {
 	config.init(rows, columns);
+
+	config.B[0] = PortType::wash;
+	config.T.back() = PortType::waste;
 }
 
 frmConfigChip::~frmConfigChip() {
@@ -48,6 +51,7 @@ void frmConfigChip::on_buttonBox_accepted() {
 	} else if (count[PortType::wash] != 0 && count[PortType::waste] != 1) {
 		QMessageBox::warning(this, tr("Warning"), tr("Please specify exactly one waste port with wash input port."));
 	} else {
+		config.hasWash = (count[PortType::wash] > 0);
 		this->close();
 		emit accepted(config);
 	}
@@ -75,8 +79,8 @@ bool frmConfigChip::eventFilter(QObject *o, QEvent *e) {
 
 			qreal grid = getGridSize(W, H, R, C);
 
-			qint32 X = int(floor((ev->x() - (W - grid * C) / 2.0) / grid));
-			qint32 Y = int(floor((ev->y() - (H - grid * R) / 2.0) / grid));
+			qint32 X = qint32(floor((ev->x() - (W - grid * C) / 2.0) / grid));
+			qint32 Y = qint32(floor((ev->y() - (H - grid * R) / 2.0) / grid));
 
 			PortType type = PortType::none;
 			if (ui->optNone->isChecked()) {

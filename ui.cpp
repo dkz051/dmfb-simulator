@@ -255,7 +255,7 @@ void renderContaminants(const ChipConfig &config, qreal W, qreal H, quint32 rand
 				for (auto s: contaminants[x][y]) {
 					auto it = droplets[s][std::min(droplets[s].size() - 1, 1)];
 					g->setBrush(QColor::fromHsv(it.h, it.s, it.v, 0x7f));
-					g->drawEllipse(QPointF((x + randReal(0.0, 1.0)) * grid, (y + randReal(0.0, 1.0)) * grid), rContaminant * grid, rContaminant * grid);
+					g->drawEllipse(QPointF((x + randReal(rContaminant * 0.5, 1.0 - rContaminant * 0.5)) * grid, (y + randReal(rContaminant * 0.5, 1.0 - rContaminant * 0.5)) * grid), rContaminant * grid, rContaminant * grid);
 				}
 			//	g->drawEllipse(QPointF((x + 0.5) * grid, (y + 0.5) * grid), rContaminant * grid, rContaminant * grid);
 			}
@@ -276,13 +276,36 @@ void renderContaminantCount(const ChipConfig &config, qreal W, qreal H, const QV
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
 	QFont font;
-	font.setPointSizeF(std::max(grid / 4.0, 4.0));
+	font.setPointSizeF(std::max(grid / 2.5, 4.0));
 	g->setFont(font);
 	g->setPen(Qt::black);
 	for (qint32 x = 0; x < C; ++x) {
 		for (qint32 y = 0; y < R; ++y) {
 			if (contaminants[x][y].count() > 0) {
 				g->drawText(QRectF(x * grid, y * grid, grid, grid), Qt::AlignCenter, QString("%1").arg(contaminants[x][y].count()));
+			}
+		}
+	}
+
+	g->restore();
+}
+
+void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<bool>> &obstacles, QPainter *g) {
+	if (!config.valid) return;
+
+	qint32 R = config.rows, C = config.columns;
+	qreal grid = getGridSize(W, H, R, C);
+
+	g->save();
+
+	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
+
+	g->setPen(Qt::white);
+	for (qint32 x = 0; x < C; ++x) {
+		for (qint32 y = 0; y < R; ++y) {
+			if (obstacles[x][y]) {
+				g->drawLine(QPointF(x * grid, y * grid), QPointF((x + 1) * grid, (y + 1) * grid));
+				g->drawLine(QPointF(x * grid, (y + 1) * grid), QPointF((x + 1) * grid, y * grid));
 			}
 		}
 	}

@@ -54,6 +54,8 @@ private slots:
 	void on_actionReset_triggered();
 
 	void playSound(qint32 sounds);
+	void clearContaminants();
+	void clearObstacles();
 private:
 	Ui::MainWindow *ui;
 
@@ -72,6 +74,7 @@ private:
 
 	QVector<QVector<QSet<qint32>>> contamination;
 	quint32 randSeed;
+	QVector<QVector<bool>> obstacles;
 };
 
 #endif // MAINWINDOW_H

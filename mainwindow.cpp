@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 	connect(&timer, SIGNAL(timeout()), this, SLOT(onTimeout()));
 	ui->picDisplay->installEventFilter(this);
 
+	ui->lblWashObstacleHints->setVisible(false);
+
 	sndMove.setLoops(1);
 	sndMerge.setLoops(1);
 	sndSplit.setLoops(1);
@@ -50,8 +52,13 @@ void MainWindow::onDlgNewChipAccepted(qint32 rows, qint32 columns) {
 	ui->actionStep->setEnabled(false);
 	ui->actionRevert->setEnabled(false);
 	ui->actionReset->setEnabled(false);
+	ui->actionWash->setEnabled(false);
+	ui->lblWashObstacleHints->setVisible(false);
 
 	dataLoaded = false;
+
+	clearObstacles();
+	clearContaminants();
 
 	frmConfigChip *wndConfigChip = new frmConfigChip(this);
 	connect(wndConfigChip, SIGNAL(accepted(const ChipConfig &)), this, SLOT(onDlgConfigChipAccepted(const ChipConfig &)));
@@ -64,6 +71,8 @@ void MainWindow::onDlgConfigChipAccepted(const ChipConfig &config) {
 	this->config = config;
 	ui->actionLoadCommandFile->setEnabled(true);
 
+	clearObstacles();
+	clearContaminants();
 	selectFile();
 }
 
@@ -91,7 +100,6 @@ void MainWindow::selectFile() {
 		if (fileName.empty()) return;
 		loadFile(fileName[0]);
 	}
-	this->setFocus();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *e) {
@@ -113,12 +121,8 @@ void MainWindow::loadFile(const QString &url) {
 
 	randSeed = quint32(rand());
 
-	contamination.clear();
-	contamination.resize(config.columns);
-
-	for (qint32 i = 0; i < config.columns; ++i) {
-		contamination[i].resize(config.rows);
-	}
+	clearObstacles();
+	clearContaminants();
 
 	maxTime = (maxTime / 1000) * 1000; // Truncate to seconds (in case any command failed)
 
@@ -182,11 +186,13 @@ void MainWindow::on_actionStart_triggered() {
 
 	ui->actionNewChip->setEnabled(false);
 	ui->actionLoadCommandFile->setEnabled(false);
+	ui->actionWash->setEnabled(false);
+	ui->lblWashObstacleHints->setVisible(false);
 }
 
 void MainWindow::on_actionPause_triggered() {
 	timer.stop();
-	//displayTime = ceil(displayTime / 1000.0) * 1000; // set to the next second
+	displayTime = qint32(ceil(displayTime / 1000.0)) * 1000; // set to the next second (for the convenience of wash)
 
 	ui->actionStart->setEnabled(true);
 	ui->actionPause->setEnabled(false);
@@ -196,6 +202,8 @@ void MainWindow::on_actionPause_triggered() {
 
 	ui->actionNewChip->setEnabled(true);
 	ui->actionLoadCommandFile->setEnabled(true);
+	ui->actionWash->setEnabled(true);
+	ui->lblWashObstacleHints->setVisible(true);
 
 	render();
 }
@@ -210,6 +218,12 @@ void MainWindow::on_actionStep_triggered() {
 	for (auto it = iter; it != jter; ++it) {
 		contamination[it->x][it->y].insert(it->id);
 	}
+
+	if (displayTime / 1000 == error.t) {
+		on_actionPause_triggered();
+		sndError.play();
+		QMessageBox::warning(this, tr("Error"), error.msg);
+	}
 	render();
 }
 
@@ -223,6 +237,8 @@ void MainWindow::on_actionReset_triggered() {
 	displayTime = minTime;
 	ui->actionNewChip->setEnabled(true);
 	ui->actionLoadCommandFile->setEnabled(true);
+	ui->actionWash->setEnabled(true);
+	ui->lblWashObstacleHints->setVisible(true);
 	render();
 }
 
@@ -240,17 +256,38 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			renderGridAxisNumber(config, W, H, &painter);
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
-				if (timer.isActive() || displayTime != maxTime) {
-					renderContaminants(config, W, H, randSeed, droplets, contamination, &painter);
-				} else {
+				renderContaminants(config, W, H, randSeed, droplets, contamination, &painter);
+				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
+				renderWashObstacles(config, W, H, obstacles, &painter);
+				if (!timer.isActive() && displayTime == maxTime) {
 					renderContaminantCount(config, W, H, contamination, &painter);
 				}
-				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
 			}
 			renderGrid(config, W, H, &painter);
 			return true;
 		} else if (e->type() == QEvent::MouseButtonPress) {
-			// TODO: Toggle obstacle (of wash droplets) status when clicked
+			if (timer.isActive() || !config.hasWash) {
+				return false; // Cannot set obstacles when running/washing or if no wash/waste port exists
+			}
+
+			QMouseEvent *ev = static_cast<QMouseEvent *>(e);
+
+			qreal W = p->width(), H = p->height();
+			qint32 R = config.rows, C = config.columns;
+
+			qreal grid = getGridSize(W, H, R, C);
+
+			qint32 X = qint32(floor((ev->x() - (W - grid * C) / 2.0) / grid));
+			qint32 Y = qint32(floor((ev->y() - (H - grid * R) / 2.0) / grid));
+
+			if (isPortType(X, Y, config, PortType::wash) || isPortType(X, Y, config, PortType::waste)) {
+				obstacles[X][Y] = false;
+			} else {
+				obstacles[X][Y] = !obstacles[X][Y];
+			}
+
+			p->update();
+			return true;
 		}
 	}
 	return false;
@@ -272,5 +309,30 @@ void MainWindow::playSound(qint32 sounds) {
 	}
 	if (sounds & sndFxSplitting) {
 		sndSplitting.play();
+	}
+}
+
+void MainWindow::clearObstacles() {
+	obstacles.clear();
+	if (config.rows > 0 && config.columns > 0) {
+		obstacles.resize(config.columns);
+		for (qint32 i = 0; i < config.columns; ++i) {
+			obstacles[i].resize(config.rows);
+			for (qint32 j = 0; j < config.rows; ++j) {
+				obstacles[i][j] = false;
+			}
+		}
+	}
+}
+
+void MainWindow::clearContaminants() {
+	contamination.clear();
+
+	if (config.rows > 0 && config.columns > 0) {
+		contamination.resize(config.columns);
+
+		for (qint32 i = 0; i < config.columns; ++i) {
+			contamination[i].resize(config.rows);
+		}
 	}
 }

@@ -38,13 +38,29 @@
   </property>
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
-    <item row="0" column="0">
+    <item row="2" column="0">
      <widget class="QWidget" name="picDisplay" native="true">
       <property name="sizePolicy">
        <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
         <horstretch>0</horstretch>
         <verstretch>0</verstretch>
        </sizepolicy>
+      </property>
+     </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="QLabel" name="lblWashObstacleHints">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="text">
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint&lt;/span&gt;: &lt;span style=&quot; font-style:italic;&quot;&gt;Click&lt;/span&gt; on an electrode to toggle obstacles for wash droplets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignCenter</set>
       </property>
      </widget>
     </item>
@@ -79,6 +95,8 @@
     <addaction name="actionRevert"/>
     <addaction name="separator"/>
     <addaction name="actionReset"/>
+    <addaction name="separator"/>
+    <addaction name="actionWash"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -116,6 +134,8 @@
    <addaction name="actionRevert"/>
    <addaction name="separator"/>
    <addaction name="actionReset"/>
+   <addaction name="separator"/>
+   <addaction name="actionWash"/>
   </widget>
   <action name="actionNewChip">
    <property name="text">
@@ -205,6 +225,14 @@
    </property>
    <property name="shortcut">
     <string>F9</string>
+   </property>
+  </action>
+  <action name="actionWash">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Wash</string>
    </property>
   </action>
  </widget>
