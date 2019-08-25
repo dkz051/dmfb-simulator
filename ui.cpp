@@ -47,7 +47,7 @@ void renderPortConfigMask(const ChipConfig &config, qreal W, qreal H, QPainter *
 
 	g->setPen(Qt::PenStyle::NoPen);
 
-	g->setBrush(fullSaturatedGrey);
+	g->setBrush(halfGrey);
 	g->drawRect(QRectF(grid, grid, (C - 2) * grid, (R - 2) * grid));
 
 	g->restore();
@@ -291,7 +291,7 @@ void renderContaminantCount(const ChipConfig &config, qreal W, qreal H, const QV
 }
 
 void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVector<QVector<bool>> &obstacles, QPainter *g) {
-	if (!config.valid) return;
+	if (!config.valid || !config.hasWash) return;
 
 	qint32 R = config.rows, C = config.columns;
 	qreal grid = getGridSize(W, H, R, C);
@@ -300,12 +300,15 @@ void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVect
 
 	g->translate((W - grid * C) / 2.0, (H - grid * R) / 2.0);
 
-	g->setPen(fullSaturatedGrey);
+	//g->setPen(Qt::black);
+	g->setPen(halfGrey);
+	g->setBrush(halfGrey);
 	for (qint32 x = 0; x < C; ++x) {
 		for (qint32 y = 0; y < R; ++y) {
 			if (obstacles[x][y]) {
-				g->drawLine(QPointF(x * grid, y * grid), QPointF((x + 1) * grid, (y + 1) * grid));
-				g->drawLine(QPointF(x * grid, (y + 1) * grid), QPointF((x + 1) * grid, y * grid));
+			//	g->drawLine(QPointF(x * grid, y * grid), QPointF((x + 1) * grid, (y + 1) * grid));
+			//	g->drawLine(QPointF(x * grid, (y + 1) * grid), QPointF((x + 1) * grid, y * grid));
+				g->drawRect(QRectF(x * grid, y * grid, grid, grid));
 			}
 		}
 	}
@@ -314,7 +317,7 @@ void renderWashObstacles(const ChipConfig &config, qreal W, qreal H, const QVect
 }
 
 void renderWash(const ChipConfig &config, qreal W, qreal H, qreal time, const QVector<Position> &steps, QColor color, QPainter *g) {
-	if (!config.valid) return;
+	if (!config.valid || !config.hasWash) return;
 
 	qint32 R = config.rows, C = config.columns;
 	qreal grid = getGridSize(W, H, R, C);

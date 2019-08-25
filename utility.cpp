@@ -15,7 +15,7 @@ const qreal rContaminant = 0.2;
 const qint32 contaminationDots = 10;
 
 const qreal runAcceleration = 1.0;
-const qreal washAcceleration = runAcceleration * 4.0;
+const qreal washAcceleration = runAcceleration * 8.0;
 
 const qreal soundOffset = 0.3;
 const qreal mergingTimeInterval = 1.6;
@@ -26,14 +26,14 @@ const qint32 sndFxMerge = 2;
 const qint32 sndFxSplitting = 4;
 const qint32 sndFxSplit = 8;
 
-const qint32 dirx[8] = {-1, 0, 0, 1, -1, -1, 1, 1};
-const qint32 diry[8] = {0, 1, -1, 0, -1, 1, -1, 1};
+const qint32 dirX[8] = {-1, 0, 0, 1, -1, -1, 1, 1};
+const qint32 dirY[8] = {0, 1, -1, 0, -1, 1, -1, 1};
 
 const QColor halfSaturatedRed = QColor::fromHsv(0, 127, 255, 127);
 const QColor halfSaturatedGreen = QColor::fromHsv(90, 127, 255, 127);
 const QColor halfSaturatedCyan = QColor::fromHsv(180, 127, 255, 127);
 const QColor halfSaturatedPurple = QColor::fromHsv(270, 127, 255, 127);
-const QColor fullSaturatedGrey = QColor::fromRgb(192, 192, 192, 255);
+const QColor halfGrey = QColor::fromRgb(192, 192, 192, 192);
 
 void ChipConfig::init(qint32 rows, qint32 columns) {
 	if (rows < 3 || rows > 12 || columns < 3 || columns > 12 || (rows == 3 && columns == 3)) {
@@ -107,7 +107,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 	auto putDroplet = [&](qint32 x, qint32 y, qint32 id) -> bool {
 		auto pos = Position(x, y);
 		for (qint32 k = 0; k < 8; ++k) {
-			qint32 xx = x + dirx[k], yy = y + diry[k];
+			qint32 xx = x + dirX[k], yy = y + dirY[k];
 			auto pok = Position(xx, yy);
 			if (posMap.count(pok) && posMap[pok] != id) {
 				return false;
@@ -121,9 +121,14 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 		posMap.remove(Position(x, y));
 	};
 
+	auto checkPosition = [&](qint32 x, qint32 y) -> bool {
+		return x >= 0 && x < config.columns && y >= 0 && y < config.rows;
+	};
+
 	qint32 count = 0;
 
-	minTime = maxTime = 0;
+	minTime = 0;
+	maxTime = -(1ll << 60);
 
 	error = ErrorLog(-2, "");
 
@@ -218,7 +223,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			maxTime = std::max(maxTime, c.t * qint64(1000));
 
 			if (!isPortType(c.x1, c.y1, config, PortType::input)) {
-				error = ErrorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot place a droplet at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 			DropletStatus mnt(c.t, c.x1, c.y1, radius, radius, 0xff, randInt(0, 359), randInt(127, 255), randInt(127, 255));
@@ -227,7 +232,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			DropletStatus mnt0(c.t - 1, c.x1, c.y1, 0, 0, 0, mnt.h, mnt.s, mnt.v);
 
 			if (!putDroplet(mnt.x, mnt.y, count++)) {
-				error = ErrorLog(c.t, QString("Cannot place a droplet on time %1, at (%2, %3): static distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot place a droplet at (%2, %3): static distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -241,12 +246,12 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= droplets.size()) {
-				error = ErrorLog(c.t, QString("Cannot output a droplet on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot output a droplet at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
 			if (!isPortType(c.x1, c.y1, config, PortType::output)) {
-				error = ErrorLog(c.t, QString("Cannot output the droplet on time %1, at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot output the droplet at (%2, %3): position not beside an input port.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 
@@ -267,7 +272,12 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= droplets.size()) {
-				error = ErrorLog(c.t, QString("Cannot %1 on time %2, at (%3, %4): no droplet here.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%2: Cannot %1 at (%3, %4): no droplet here.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				break;
+			}
+
+			if (!checkPosition(c.x2, c.y2)) {
+				error = ErrorLog(c.t, QString("%2: Cannot %1 from (%3, %4) to (%5, %6): Position out of grid").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1).arg(c.y1).arg(c.x2).arg(c.y2));
 				break;
 			}
 
@@ -280,7 +290,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			removeList.push_back(Position(mnt1.x, mnt1.y));
 
 			if (!putDroplet(mnt2.x, mnt2.y, id)) {
-				error = ErrorLog(c.t, QString("Cannot %1 on time %2, from (%3, %4) to (%5, %6): dynamic distance constraint failed.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
+				error = ErrorLog(c.t, QString("%2: Cannot %1 from (%3, %4) to (%5, %6): dynamic distance constraint failed.").arg(c.type == CommandType::Move ? "move" : "mix").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
 				break;
 			}
 
@@ -298,7 +308,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			qint32 id2 = findIdFromPosition(c.x2, c.y2);
 
 			if (id1 < 0 || id1 >= droplets.size() || id2 < 0 || id2 >= droplets.size()) {
-				error = ErrorLog(c.t, QString("Cannot merge on time %1, between (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
+				error = ErrorLog(c.t, QString("%1: Cannot merge (%2, %3) and (%4, %5): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1).arg(c.x2 + 1).arg(config.rows - c.y2));
 				break;
 			}
 
@@ -374,7 +384,12 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			qint32 id = findIdFromPosition(c.x1, c.y1);
 
 			if (id < 0 || id >= droplets.size()) {
-				error = ErrorLog(c.t, QString("Cannot split on time %1, at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot split at (%2, %3): no droplet here.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				break;
+			}
+
+			if (!checkPosition(c.x2, c.y2) || !checkPosition(c.x3, c.y3)) {
+				error = ErrorLog(c.t, QString("%1: Cannot split (%2, %3) to (%4, %5) and (%6, %7): Position out of grid").arg(c.t).arg(c.x1).arg(c.y1).arg(c.x2).arg(c.y2).arg(c.x3).arg(c.y3));
 				break;
 			}
 
@@ -394,7 +409,7 @@ void loadFile(const QString &url, const ChipConfig &config, QVector<Droplet> &dr
 			droplets[id].push_back(iter);
 
 			if (!putDroplet(c.x1, c.y1, id) || !putDroplet(c.x2, c.y2, id) || !putDroplet(c.x3, c.y3, id)) {
-				error = ErrorLog(c.t, QString("Cannot split on time %1, at (%2, %3): dynamic distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
+				error = ErrorLog(c.t, QString("%1: Cannot split at (%2, %3): dynamic distance constraint failed.").arg(c.t).arg(c.x1 + 1).arg(config.rows - c.y1));
 				break;
 			}
 

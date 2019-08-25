@@ -5,5 +5,13 @@
         <file>sounds/split.wav</file>
         <file>sounds/splitting.wav</file>
         <file>sounds/error.wav</file>
+        <file>icons/chip.png</file>
+        <file>icons/load.png</file>
+        <file>icons/pause.png</file>
+        <file>icons/reset.png</file>
+        <file>icons/revert.png</file>
+        <file>icons/start.png</file>
+        <file>icons/step.png</file>
+        <file>icons/wash.png</file>
     </qresource>
 </RCC>

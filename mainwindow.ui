@@ -57,7 +57,7 @@
        </sizepolicy>
       </property>
       <property name="text">
-       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint&lt;/span&gt;: &lt;span style=&quot; font-style:italic;&quot;&gt;Click&lt;/span&gt; on an electrode to toggle obstacles for wash droplets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+       <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Hint&lt;/span&gt;: &lt;span style=&quot; font-style:italic;&quot;&gt;Click&lt;/span&gt; on an electrode to toggle obstacle for wash droplets.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
@@ -138,6 +138,10 @@
    <addaction name="actionReset"/>
   </widget>
   <action name="actionNewChip">
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/chip.png</normaloff>:/icons/chip.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;New Chip...</string>
    </property>
@@ -148,6 +152,10 @@
   <action name="actionLoadCommandFile">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/load.png</normaloff>:/icons/load.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Load Command File...</string>
@@ -176,6 +184,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/start.png</normaloff>:/icons/start.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Start</string>
    </property>
@@ -186,6 +198,10 @@
   <action name="actionPause">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/pause.png</normaloff>:/icons/pause.png</iconset>
    </property>
    <property name="text">
     <string>&amp;Pause</string>
@@ -198,6 +214,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/step.png</normaloff>:/icons/step.png</iconset>
+   </property>
    <property name="text">
     <string>S&amp;tep</string>
    </property>
@@ -208,6 +228,10 @@
   <action name="actionRevert">
    <property name="enabled">
     <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/revert.png</normaloff>:/icons/revert.png</iconset>
    </property>
    <property name="text">
     <string>Re&amp;vert</string>
@@ -220,6 +244,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/reset.png</normaloff>:/icons/reset.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Reset</string>
    </property>
@@ -231,6 +259,10 @@
    <property name="enabled">
     <bool>false</bool>
    </property>
+   <property name="icon">
+    <iconset resource="dmfb.qrc">
+     <normaloff>:/icons/wash.png</normaloff>:/icons/wash.png</iconset>
+   </property>
    <property name="text">
     <string>&amp;Wash</string>
    </property>
@@ -240,6 +272,8 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="dmfb.qrc"/>
+ </resources>
  <connections/>
 </ui>

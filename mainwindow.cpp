@@ -45,6 +45,8 @@ MainWindow::MainWindow(QWidget *parent) :
 	sndSplit.setLoops(1);
 	sndSplitting.setLoops(1);
 	sndError.setLoops(1);
+
+	config.valid = false;
 }
 
 MainWindow::~MainWindow() {
@@ -143,6 +145,10 @@ void MainWindow::loadFile(const QString &url) {
 	ui->actionStart->setEnabled(true);
 	ui->actionStep->setEnabled(true);
 
+	if (config.hasWash) {
+		ui->actionWash->setEnabled(true);
+	}
+
 	displayTime = minTime;
 	dataLoaded = true;
 
@@ -179,7 +185,7 @@ void MainWindow::onRunTimeout() {
 		on_actionPause_triggered();
 	}
 
-	if (lastDisplay / 1000 < error.t && displayTime / 1000 >= error.t) {
+	if (floor(lastDisplay / 1000.0) < error.t && floor(displayTime / 1000.0) >= error.t) {
 		on_actionPause_triggered();
 		sndError.play();
 		QMessageBox::warning(this, tr("Error"), error.msg);
@@ -200,7 +206,6 @@ void MainWindow::on_actionStart_triggered() {
 
 	ui->actionNewChip->setEnabled(false);
 	ui->actionLoadCommandFile->setEnabled(false);
-	ui->actionWash->setEnabled(false);
 	ui->lblWashObstacleHints->setVisible(false);
 }
 
@@ -217,13 +222,22 @@ void MainWindow::on_actionPause_triggered() {
 
 	ui->actionNewChip->setEnabled(true);
 	ui->actionLoadCommandFile->setEnabled(true);
-	ui->actionWash->setEnabled(true);
-	ui->lblWashObstacleHints->setVisible(true);
+
+	if (config.hasWash) {
+		ui->actionWash->setEnabled(true);
+		ui->lblWashObstacleHints->setVisible(true);
+	}
 
 	render();
 }
 
 void MainWindow::on_actionStep_triggered() {
+	if (displayTime / 1000 == error.t) {
+		on_actionPause_triggered();
+		sndError.play();
+		QMessageBox::warning(this, tr("Error"), error.msg);
+	}
+
 	displayTime = qint32(floor(displayTime / 1000.0) + 1.0) * 1000;
 	displayTime = std::min(displayTime, maxTime);
 
@@ -234,11 +248,6 @@ void MainWindow::on_actionStep_triggered() {
 		contamination[it->x][it->y].insert(it->id);
 	}
 
-	if (displayTime / 1000 == error.t) {
-		on_actionPause_triggered();
-		sndError.play();
-		QMessageBox::warning(this, tr("Error"), error.msg);
-	}
 	render();
 }
 
@@ -252,8 +261,11 @@ void MainWindow::on_actionReset_triggered() {
 	displayTime = minTime;
 	ui->actionNewChip->setEnabled(true);
 	ui->actionLoadCommandFile->setEnabled(true);
-	ui->actionWash->setEnabled(true);
-	ui->lblWashObstacleHints->setVisible(true);
+
+	if (config.hasWash) {
+		ui->actionWash->setEnabled(true);
+		ui->lblWashObstacleHints->setVisible(true);
+	}
 	render();
 }
 
@@ -269,11 +281,12 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 
 			renderPortType(config, W, H, &painter);
 			renderGridAxisNumber(config, W, H, &painter);
+
 			if (dataLoaded) {
 				renderTime(config, displayTime / 1000.0, maxTime / 1000.0, W, H, &painter);
+				renderWashObstacles(config, W, H, obstacles, &painter);
 				renderContaminants(config, W, H, randSeed, droplets, contamination, &painter);
 				renderDroplets(config, droplets, displayTime / 1000.0, W, H, &painter);
-				renderWashObstacles(config, W, H, obstacles, &painter);
 				if (!timerRun.isActive() && displayTime == maxTime) {
 					renderContaminantCount(config, W, H, contamination, &painter);
 				}
@@ -284,7 +297,7 @@ bool MainWindow::eventFilter(QObject *o, QEvent *e) {
 			renderGrid(config, W, H, &painter);
 			return true;
 		} else if (e->type() == QEvent::MouseButtonPress) {
-			if (timerRun.isActive() || !config.hasWash) {
+			if (timerRun.isActive() || timerWash.isActive() || !config.hasWash) {
 				return false; // Cannot set obstacles when running/washing or if no wash/waste port exists
 			}
 
@@ -421,8 +434,10 @@ bool MainWindow::wash(QVector<Position> &steps) {
 	QQueue<Position> queue;
 	queue.enqueue(Position(sx, sy));
 	steps.push_back(Position(sx, sy));
-	moveToPort(sx, sy, config);
-	steps.push_front(Position(sx, sy));
+
+	qint32 ssx = sx, ssy = sy;
+	moveToPort(ssx, ssy, config);
+	steps.push_front(Position(ssx, ssy));
 	while (!queue.empty()) {
 		Position pos = queue.dequeue();
 		for (qint32 k = 0; k < 4; ++k) {
@@ -450,17 +465,13 @@ bool MainWindow::wash(QVector<Position> &steps) {
 		QMessageBox::warning(this, tr("Error washing"), tr("Cannot wash the chip: no valid route."));
 		return false;
 	}
-	if (steps.size() <= 2) {
+	if (steps.size() <= 2 && !contamination[sx][sy].size()) {
 		QMessageBox::information(this, tr("Hint"), tr("Nothing to wash."));
 		return false;
 	}
 	washRoute(config, steps, tx, ty, ob);
 	moveToPort(tx, ty, config);
 	steps.push_back(Position(tx, ty));
-
-	for (qint32 i = 0; i < steps.size(); ++i) {
-		qDebug() << steps[i].first << ' ' << steps[i].second;
-	}
 
 	return true;
 }
@@ -523,6 +534,9 @@ void MainWindow::washRoute(const ChipConfig &config, QVector<Position> &steps, q
 }
 
 void MainWindow::on_actionWash_triggered() {
+	if (timerRun.isActive()) {
+		on_actionPause_triggered();
+	}
 	if (wash(steps)) {
 		lastWashTime = QDateTime::currentMSecsSinceEpoch();
 		curWashTime = 0;
@@ -559,7 +573,9 @@ void MainWindow::onWashTimeout() {
 		ui->actionRevert->setEnabled(true);
 		ui->actionReset->setEnabled(true);
 
-		ui->actionWash->setEnabled(true);
+		if (config.hasWash) {
+			ui->actionWash->setEnabled(true);
+		}
 		timerWash.stop();
 	}
 

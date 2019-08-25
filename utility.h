@@ -29,14 +29,14 @@ extern const qint32 sndFxMerge;
 extern const qint32 sndFxSplitting;
 extern const qint32 sndFxSplit;
 
-extern const qint32 dirx[8];
-extern const qint32 diry[8];
+extern const qint32 dirX[8];
+extern const qint32 dirY[8];
 
 extern const QColor halfSaturatedRed;
 extern const QColor halfSaturatedGreen;
 extern const QColor halfSaturatedCyan;
 extern const QColor halfSaturatedPurple;
-extern const QColor fullSaturatedGrey;
+extern const QColor halfGrey;
 
 enum CommandType {
 	Input, Output, Move, Mix,

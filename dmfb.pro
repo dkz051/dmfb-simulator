@@ -54,3 +54,6 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 RESOURCES += \
     dmfb.qrc
+
+RC_FILE += \
+    dmfb.rc
