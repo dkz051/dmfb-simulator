@@ -2,11 +2,11 @@
 
 ___Long assignment 1 for THU Programming Practices course, August 2019___
 
-## Introduction
+## Description
 A simulator frontend for digital microfluidic biochips (DMFB). Enter the size of an electrode grid, specify input/output ports, load the command file, and the result is presented on the screen with animation effects.
 
 ## Environment
-**Required**: Qt (5.13.0 or higher)
+__Required__: Qt (5.13.0 or higher)
 
 ## Supported Commands
 Values mentioned below are all integers.
